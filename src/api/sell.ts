@@ -40,7 +40,7 @@ const sell_cards = async (mongoClient: MongoClient, bids: any) => {
 		for (let i = 0; i < data.length; i++) {
 			const card = data[i];
 
-			console.log(chalk.bold.green.bgBlack(`${account} is selling ${card.cards[0]} for: ${card.price} USD`));
+			console.log(chalk.bold.green(`${account} is selling ${card.cards[0]} for: ${card.price} USD`));
 
 			let trade = await tradesRepo.findTradeByCardId(mongoClient, card.cards[0]);
 			if (!trade.sell) return;

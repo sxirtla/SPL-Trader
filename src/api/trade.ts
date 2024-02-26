@@ -105,7 +105,7 @@ export default class Trade {
 		let quantity_remaining = bid.cards[buying_data.card_detail_id].quantity;
 		delete this.buying_account_number[buying_data.card_id];
 		console.log(
-			chalk.bold.green.bgBlack(
+			chalk.bold.green(
 				`
 ${acc} has bought ${buying_data.card_id} (${quantity_remaining} left)
 amount paid: ${tx_result.total_dec / tx_result.num_cards} DEC / ${tx_result.total_usd / tx_result.num_cards} USD
@@ -163,7 +163,7 @@ https://hivehub.dev/tx/${tx.id}`
 
 		console.log('');
 		console.log(
-			chalk.bold.blue.bgBlack(
+			chalk.bold.blue(
 				`will be selling ${buying_data.card_id} for: $${sellPrice} (profit: $${trade.profit_usd})`
 			)
 		);
@@ -276,7 +276,7 @@ https://hivehub.dev/tx/${tx.id}`
 		Promise.all(tx_promises).then((tx) => {
 			tx = tx.filter(Boolean);
 			let tx_ids: string[] = tx.map((t) => {
-				console.log(chalk.bold.yellow.bgBlack(`Trx: https://hivehub.dev/tx/${t.id}`));
+				console.log(chalk.bold.yellow(`Trx: https://hivehub.dev/tx/${t.id}`));
 				return t.id;
 			});
 
@@ -286,7 +286,7 @@ https://hivehub.dev/tx/${tx.id}`
 
 			let buying = { data: cards_to_buy, tx_ids: tx_ids };
 			this.check_buying_result(acc, buying).catch((e) =>
-				console.log(chalk.bold.red.bgBlack('error occurred in check_buying_result: ' + e))
+				console.log(chalk.bold.red('error occurred in check_buying_result: ' + e))
 			);
 		});
 	}
@@ -371,7 +371,7 @@ https://hivehub.dev/tx/${tx.id}`
 				break;
 			}
 		} catch (e: Error | any) {
-			console.log(chalk.bold.red.bgBlack('error occurred in check_desired: ' + e));
+			console.log(chalk.bold.red('error occurred in check_desired: ' + e));
 		}
 
 		process.stdout.write(Object.values(sell.get_CARDS()).flat().length.toString());

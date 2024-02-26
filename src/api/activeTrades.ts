@@ -58,7 +58,7 @@ export default class ActiveTrades {
 
 			calculate_profit(trade, updated.newPrice);
 			console.log(
-				chalk.bold.cyan.bgBlack([
+				chalk.bold.cyan([
 					`[${trade.uid}] ${trade.card_name || ''}'s price changed`,
 					` from ${updated.oldPrice} to ${updated.newPrice}`,
 					` profit: $${trade.profit_usd} ${trade.profit_margin}%`,
@@ -104,7 +104,7 @@ export default class ActiveTrades {
 		await tradesRepo.finishTrade(this.mongoClient, trade);
 
 		console.log(
-			chalk.bold.green.bgBlack([
+			chalk.bold.green([
 				`${trade.account} sold [${trade.uid}] ${trade.card_name || ''}`,
 				` profit: $${trade.profit_usd} ${trade.profit_margin}%`,
 			])
@@ -185,7 +185,7 @@ export default class ActiveTrades {
 			]);
 
 			console.log(
-				chalk.bold.cyan.bgBlack([
+				chalk.bold.cyan([
 					`[${trade.uid}] ${trade.card_name || ''} will be put to market for ${Number(sellPrice.toFixed(3))}`,
 					` profit: $${trade.profit_usd} ${trade.profit_margin}%`,
 				])
