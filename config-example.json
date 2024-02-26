@@ -1,0 +1,75 @@
+{
+	"global_params": {
+		"mongo_url": "[string] - mongo url (ex: mongodb://localhost:27017), or you can use free account form mongodb.com",
+		"accounts": {
+			"splinterlands_account_name": {
+				"currency": "DEC",
+				"currency_description": "[string] - CREDITS or DEC",
+				"minimum_balance": 0,
+				"minimum_balance_description": "[number] - how much balance you want to keep in your account",
+				"active_key": "[string] - active key for buying and selling cards",
+				"posting_key": "[string] - posting key for rc delegation",
+				"rc_from": "",
+				"rc_from_description": "[string] - optional - when rc is low, delegates it from this account",
+				"rc_amount_b": 10,
+				"rc_amount_b_description": "[number] - optional - rc amount in Billions (10 = 10 Billion)"
+			}
+		},
+		"min_profit_usd": 0.05,
+		"min_profit_usd_description": "[number] - minimum profit in USD",
+		"profit_fee_pct": 10,
+		"profit_fee_pct_description": "[number] - profit fee in percentage",
+		"fetch_market_price_delay": 5,
+		"fetch_market_price_delay_dedsciption": "[number] - delay in minutes between updating market prices",
+		"preferred_hive_node": "https://api.hive.blog",
+		"preferred_hive_node_description": "[string] - optional - fastest hive node for you, can be checked by https://peakd.com/me/benchmark"
+	},
+	"bids": [
+		{
+			"id": 1,
+			"comment": "trade cards",
+			"editions": ["alpha", "beta", "promo", "untamed", "dice", "chaos", "reward", "rift", "rebel"],
+			"rarities": ["common", "rare", "epic", "legendary"],
+			"elements": ["fire", "water", "earth", "death", "life", "dragon", "neutral"],
+			"types": ["summoner", "monster"],
+			"max_bcx_price": 100,
+			"sell_for_pct_more": 10,
+			"buy_pct_below_market": "20 - [number] - how much percent below market price should the bot buy cards",
+			"auto_set_buy_price": true,
+			"max_quantity": 5
+		},
+		{
+			"id": 2,
+			"comment": "chicken",
+			"cards": {
+				"131": { "max_quantity": 1, "max_bcx": 1, "max_bcx_price": 1, "name": "chicken" }
+			}
+		}
+	],
+	"template": {
+		"id": 0,
+		"comment": "",
+		"rules": [
+			"either max_bcx_price or min_cp_per_usd or auto_set_buy_price or bellow_burn_value should be set",
+			"if you dont provide max_bcx bot will only buy 1 bcx cards",
+			"cards array if auto generated if editions, rarities, elements and types are provided"
+		],
+		"cards": {
+			"131": { "max_quantity": 1, "max_bcx": 1, "max_bcx_price": 1, "name": "chicken" }
+		},
+		"editions": ["alpha", "beta", "promo", "reward", "untamed", "dice", "chaos", "rift", "rebel"],
+		"rarities": ["common", "rare", "epic", "legendary"],
+		"elements": ["fire", "water", "earth", "death", "life", "dragon", "neutral"],
+		"types": ["summoner", "monster"],
+		"max_bcx": 0,
+		"max_bcx_price": 0,
+		"min_cp_per_usd": 0,
+		"max_quantity": 1,
+		"gold_only": false,
+		"only_modern": false,
+		"sell_for_pct_more": 0,
+		"auto_set_buy_price": false,
+		"buy_pct_below_market": 0,
+		"bellow_burn_value": false
+	}
+}
