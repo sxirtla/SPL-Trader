@@ -89,7 +89,7 @@ export type CardToBuy = {
 	bid_idx: number;
 	card_id: string;
 	card_detail_id: number;
-	card_name?: string;
+	card_name: string;
 	bcx: number;
 	card_cp: number;
 	price: number;

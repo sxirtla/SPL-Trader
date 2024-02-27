@@ -9,8 +9,19 @@ import * as hive from './hive';
 import * as user from './user';
 import { MarketData, getCardPrices } from './market';
 
+type TradeLog = {
+	account: string;
+	uid: string;
+	name: string;
+	buy_price: number;
+	sell_price: number;
+	profit_usd: number;
+	on_market: boolean;
+};
+
 export default class ActiveTrades {
 	private lastChecked = 0;
+	private tableLogs: TradeLog[] = [];
 
 	constructor(private mongoClient: MongoClient, private params: GlobalParams) {}
 
@@ -24,16 +35,26 @@ export default class ActiveTrades {
 		activeTrades = activeTrades.slice(10 * page, 10 * (page + 1));
 		if (!activeTrades || activeTrades.length === 0) return;
 
-		console.log(new Date().toLocaleTimeString('en-US', { hour12: false }), `- checking active trades [${page}]...`);
-
 		let cards_info = await cardsApi.findCardInfo(activeTrades.map((t) => t.uid));
 		for (const trade of activeTrades) {
 			let card_info = cards_info.find((c: { uid: string }) => c.uid === trade.uid);
 			if (!card_info) continue;
 
 			await this.checkTrade(trade, card_info, marketData);
+			if (trade.status_id != 0) continue;
+			this.tableLogs.push({
+				account: trade.account,
+				uid: trade.uid,
+				name: trade.card_name || '-',
+				buy_price: trade.buy.usd,
+				sell_price: Number(trade.sell?.usd.toFixed(3)) || 0,
+				profit_usd: Number(trade.profit_usd.toFixed(3)),
+				on_market: !!(card_info.market_id && card_info.market_listing_type === 'SELL'),
+			});
 		}
 
+		console.table(this.tableLogs);
+		this.tableLogs = [];
 		await this.Check(marketData, ++page);
 	}
 
@@ -123,8 +144,6 @@ export default class ActiveTrades {
 		let maxPosForRarity = -3 * rarity + 17; // 14 | 11 | 8 | 5
 
 		if (pos == 0 || pos + 1 < maxPosForRarity) return null;
-		// if (pos + 1 >= maxPosForRarity && filteredPrices[0].buy_price > filteredPrices[pos].buy_price * 0.9)
-		// 	return null;
 
 		let newPrice = filteredPrices[0].buy_price - 0.001;
 

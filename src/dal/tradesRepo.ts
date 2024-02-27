@@ -8,7 +8,7 @@ export interface Trade extends WithId<Document> {
 	account: string;
 	uid: string;
 	card_id: number;
-	card_name?: string;
+	card_name: string;
 	bcx: number;
 	xp?: number;
 	create_date: string;
