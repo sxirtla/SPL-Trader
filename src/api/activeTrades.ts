@@ -45,7 +45,7 @@ export default class ActiveTrades {
 			this.tableLogs.push({
 				account: trade.account,
 				uid: trade.uid,
-				name: trade.card_name || '-',
+				name: card_info.details.name,
 				buy_price: trade.buy.usd,
 				sell_price: Number(trade.sell?.usd.toFixed(3)) || 0,
 				profit_usd: Number(trade.profit_usd.toFixed(3)),

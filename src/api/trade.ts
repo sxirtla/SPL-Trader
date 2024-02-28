@@ -42,14 +42,13 @@ export default class Trade {
 
 		this.usd_balances[acc] =
 			this.settings.global_params.accounts[acc].currency == 'DEC'
-				? balance * this.game_settings.dec_price
+				? Number((balance * this.game_settings.dec_price).toFixed(3))
 				: balance / 1000;
 
 		return;
 	}
 
 	async get_marketData_and_update_bid_prices() {
-		console.log('');
 		console.log(new Date().toLocaleTimeString('en-US', { hour12: false }), '- fetching market prices...');
 		let prices = await market.getPrices();
 		const pm_bids = await market.getBids();
@@ -78,6 +77,9 @@ export default class Trade {
 			await this.get_current_balance(acc);
 			await manage_rc(acc, this.settings.global_params);
 		}
+
+		console.log('');
+		console.log(this.usd_balances);
 
 		let marketData = await this.get_marketData_and_update_bid_prices();
 
