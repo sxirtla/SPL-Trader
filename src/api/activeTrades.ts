@@ -73,6 +73,8 @@ export default class ActiveTrades {
 			return;
 		}
 
+		if (trade.is_manual === true) return;
+
 		if (card_info.xp === 1 && card_info.market_id && card_info.market_listing_type === 'SELL') {
 			let updated = await this.updateCardPrice(card_info, trade, Object.keys(this.params.accounts));
 			if (!updated) return;

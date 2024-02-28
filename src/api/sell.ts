@@ -70,7 +70,7 @@ const calculate_profit = (trade: Partial<tradesRepo.Trade>, sellPrice: number) =
 };
 
 const calculate_sellPrice = (marketPrice: number, buyPrice: number, sell_for_pct_more: number = 10) => {
-	let price = Math.max(marketPrice * 0.98, marketPrice - 0.1, buyPrice * (1 + sell_for_pct_more / 100));
+	let price = Math.max(marketPrice * 0.98, Number((marketPrice - 0.08).toFixed(2)), buyPrice * (1 + sell_for_pct_more / 100));
 	return Number(price.toFixed(3));
 };
 
