@@ -13,9 +13,12 @@ The bot streams the HIVE blockchain and listens for new sell orders. You can set
 - Can run 24/7
 - Can be used to convert CREDITS to DEC
 ## Installation
+You can run the app using the Nodejs on local machine or run it inside a Docker container. Please follow the instructions bellow depanding on your choice.
+
+###Run with Node
 1. Download and install [Node.js](https://nodejs.org/)
 2. Install MongoDB locally or create a free account at [MongoDB.com](https://www.mongodb.com/)
-3. Create a free account on [monstercards.store](https://monstercards.store/ref/d1434763-5b3c-496d-9d5a-b82e8376cfc1) to receive 3% cashback
+3. Link your Splinterlands account to [monstercards.store](https://monstercards.store/ref/d1434763-5b3c-496d-9d5a-b82e8376cfc1) for receiving 3% cashback
 4. Rename config-example.json to config.json and fill in the data
 5. Open cmd (for Windows) or terminal (for Mac and Linux) in the project folder and run:
 
@@ -23,13 +26,25 @@ The bot streams the HIVE blockchain and listens for new sell orders. You can set
 
 `npm start`
 
-### Config.json
+###Run with Docker
+1. Download and install [Docker](https://docs.docker.com/get-docker/)
+2. Link your Splinterlands account to [monstercards.store](https://monstercards.store/ref/d1434763-5b3c-496d-9d5a-b82e8376cfc1) for receiving 3% cashback
+3. Rename config-example.json to config.json and fill in the data
+4. Open cmd (for Windows) or terminal (for Mac and Linux) in the project folder and run:
+
+`docker compose up`
+
+## Config
 The config.json file is where you can set the bot's parameters and specify your account info. An example file (config-example.json) is included in the folder.
 #### global_params
-1. `mongo_url`: Connection string for mongoDB that you have created in Installation step 2.
+1. `mongo_url`: Connection string for mongoDB that you have created in Installation step 2. or mongodb://splmongo if you want to use Docker
  
 ```
 "mongo_url": "mongodb://localhost:27017",
+```
+or
+```
+"mongo_url": "mongodb://splmongo",
 ```
 2. `min_profit_usd`: minimum profit for each trade in USD
 

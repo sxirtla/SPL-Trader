@@ -1,15 +1,13 @@
-import * as fs from 'fs';
-
 import { downloadCardDetails, readCardDetails } from './api/cards';
 import { connectToMongo, disconnect } from './dal/repo'
+import { loadAndValidateConfig } from './utility/helper';
 import * as hive from './api/hive';
 import Trade from './api/trade';
-import { LocalSettings } from './types/trade';
 
 (async () => {
 	await downloadCardDetails();
 	const card_details = readCardDetails();
-	let config: LocalSettings = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
+	let config = await loadAndValidateConfig();
 	
 	let serverClient = await connectToMongo(config.global_params.mongo_url);
 	hive.init(config.global_params.preferred_hive_node);

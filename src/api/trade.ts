@@ -43,7 +43,7 @@ export default class Trade {
 		this.usd_balances[acc] =
 			this.settings.global_params.accounts[acc].currency == 'DEC'
 				? Number((balance * this.game_settings.dec_price).toFixed(3))
-				: balance / 1000;
+				: Number((balance / 1000).toFixed(3));
 
 		return;
 	}
