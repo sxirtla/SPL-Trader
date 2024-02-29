@@ -1,4 +1,5 @@
 import { downloadCardDetails, readCardDetails } from './api/cards';
+import { downloadGameSettings } from './api/settings';
 import { connectToMongo, disconnect } from './dal/repo'
 import { loadAndValidateConfig } from './utility/helper';
 import * as hive from './api/hive';
@@ -6,6 +7,8 @@ import Trade from './api/trade';
 
 (async () => {
 	await downloadCardDetails();
+	await downloadGameSettings();
+	
 	const card_details = readCardDetails();
 	let config = await loadAndValidateConfig();
 	
