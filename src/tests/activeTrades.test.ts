@@ -80,8 +80,8 @@ describe('ActiveTrades', () => {
 		);
 		let findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
 			Promise.resolve([
-				{ uid: 'C7-123-abcd', player: defaultAccount, xp: 1, market_listing_type: 'sell' },
-				{ uid: 'C7-321-dcba', player: defaultAccount, xp: 1, market_listing_type: 'sell' },
+				{ uid: 'C7-123-abcd', player: defaultAccount, xp: 1, market_listing_type: 'sell', bcx: 1, last_buy_price: '1', details: {name: 'test'} },
+				{ uid: 'C7-321-dcba', player: defaultAccount, xp: 1, market_listing_type: 'sell', bcx: 1, last_buy_price: '2', details: {name: 'test'} },
 			])
 		);
 		let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');

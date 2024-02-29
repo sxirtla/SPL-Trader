@@ -3,7 +3,7 @@ import chalk from 'chalk';
 
 import { GlobalParams } from '../types/trade';
 import * as tradesRepo from '../dal/tradesRepo';
-import { add_CARDS, calculate_profit, calculate_sellPrice } from './sell';
+import { add_CARDS, calculate_profit, calculate_sellPrice, calculate_break_even } from './sell';
 import * as cardsApi from './cards';
 import * as hive from './hive';
 import * as user from './user';
@@ -91,7 +91,7 @@ export default class ActiveTrades {
 				...trade.sell,
 				usd: updated.newPrice,
 				tx_id: updated.id,
-				break_even: trade.sell?.break_even || 0,
+				break_even: trade.sell?.break_even || calculate_break_even(trade.buy.usd),
 				tx_count: (trade.sell?.tx_count || 0) + 1,
 			};
 
@@ -113,6 +113,23 @@ export default class ActiveTrades {
 	private async checkXp(trade: tradesRepo.Trade, card_info: any) {
 		if (!trade.xp) {
 			trade.xp = card_info.xp;
+			trade.card_id = card_info.card_detail_id;
+			trade.card_name = card_info.details.name;
+			trade.create_date = trade.create_date || new Date().toISOString();
+			trade.bcx = trade.bcx || card_info.bcx;
+			trade.profit_usd = trade.profit_usd || 0;
+			trade.profit_margin = trade.profit_margin || 0;
+			trade.status_id = 0;
+			trade.status = 'Active';
+			trade.buy = trade.buy || { usd: Number(card_info.last_buy_price) || 0 };
+			trade.sell = trade.sell || {
+				usd: Number(card_info.buy_price) || 0,
+				tx_id: card_info.market_id || '',
+				tx_count: card_info.market_listing_type === 'SELL' ? 1 : 0,
+				break_even: calculate_break_even(trade.buy.usd),
+			};
+			if (card_info.buy_price) calculate_profit(trade, Number(card_info.buy_price));
+			
 			await tradesRepo.updateTrade(this.mongoClient, trade);
 		}
 	}
@@ -157,7 +174,7 @@ export default class ActiveTrades {
 			break;
 		}
 
-		newPrice = Math.max(newPrice, trade.sell?.break_even || (trade.buy.usd * 97) / 94);
+		newPrice = Math.max(newPrice, trade.sell?.break_even || calculate_break_even(trade.buy.usd));
 
 		if (newPrice >= filteredPrices[pos].buy_price) return null;
 
@@ -180,10 +197,10 @@ export default class ActiveTrades {
 
 		const marketPrice = trade.bcx > 1 ? cardPrices.low_price_bcx : cardPrices.low_price;
 		trade.sell = trade.sell || { usd: 0, break_even: 0, tx_count: 0 };
-		trade.sell.break_even = trade.sell.break_even || (trade.buy.usd * 97) / 94;
+		trade.sell.break_even = trade.sell.break_even || calculate_break_even(trade.buy.usd);
 		if (marketPrice > trade.sell.break_even) {
 			let breakEvenPct = 100 - Math.trunc((trade.buy.usd / trade.sell.break_even) * 100);
-			const sellPrice = calculate_sellPrice(marketPrice, trade.buy.usd, breakEvenPct);
+			const sellPrice = calculate_sellPrice(marketPrice, trade.buy.usd, breakEvenPct || undefined);
 			calculate_profit(trade, sellPrice);
 
 			await tradesRepo.updateTrade(this.mongoClient, trade);

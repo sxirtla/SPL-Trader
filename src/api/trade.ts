@@ -83,7 +83,7 @@ export default class Trade {
 
 		let marketData = await this.get_marketData_and_update_bid_prices();
 
-		await sell.sell_cards(this.mongoClient, this.bids).catch((e) => console.log('error in sell_cards:', e));
+		await sell.sell_cards(this.mongoClient).catch((e) => console.log('error in sell_cards:', e));
 
 		await this.activeTrades.Check(marketData);
 	}
@@ -385,7 +385,7 @@ https://hivehub.dev/tx/${tx.id}`
 		//process.stdout.write('.');
 
 		let op = operation.op[1];
-		if (op.id != 'sm' + '_' + 'sell_cards' || this.accounts.includes(op.required_auths[0])) return;
+		if (op.id != 'sm_sell_cards' || this.accounts.includes(op.required_auths[0])) return;
 
 		let parsedJson = JSON.parse(op.json);
 		let listings = [parsedJson];

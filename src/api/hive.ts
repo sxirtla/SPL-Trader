@@ -106,7 +106,10 @@ const sell_cards = (acc: string, data: any) => {
 		json: JSON.stringify(data),
 	};
 
-	return broadcast(jsondata);
+	return broadcast(jsondata).catch((e: Error) => {
+		console.log('Error in sell_cards broadcast:', e);
+		return null;
+	});
 };
 
 const buy_cards = (acc: string, data: any) => {
