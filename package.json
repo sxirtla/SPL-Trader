@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc -p . && node dist/index.js",
-    "dev": "ts-node-dev src/index.ts",
+    "start": "npm run build && node dist/index.js",
+    "dev": "ts-node-dev --poll src/index.ts",
     "test": "jest --watchAll",
     "cover": "jest --coverage",
     "build": "tsc -p .",
@@ -16,6 +16,8 @@
   "license": "ISC",
   "dependencies": {
     "@hiveio/dhive": "^1.2.8",
+    "chalk": "^4.1.2",
+    "json-validator-utill": "^1.0.5",
     "mongodb": "^6.3.0",
     "node-fetch": "^3.3.2"
   },

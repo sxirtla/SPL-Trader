@@ -1,6 +1,6 @@
 {
 	"global_params": {
-		"mongo_url": "[string] - mongo url (ex: mongodb://localhost:27017), or you can use free account form mongodb.com",
+		"mongo_url": "[string] - mongo url (ex: mongodb://localhost:27017 or mongodb://splmongo if you are using Docker), or you can use free account form mongodb.com",
 		"accounts": {
 			"splinterlands_account_name": {
 				"currency": "DEC",
