@@ -186,12 +186,6 @@ export default class ActiveTrades {
 			const sellPrice = calculate_sellPrice(marketPrice, trade.buy.usd, breakEvenPct);
 			calculate_profit(trade, sellPrice);
 
-			if (!trade.sell || !trade.sell.market_price) {
-				trade.sell = trade.sell || { usd: 0 };
-				trade.sell.market_price = { buy_price: 0 };
-			}
-			trade.sell.market_price.low_price = cardPrices.low_price;
-			trade.sell.market_price.low_price_bcx = cardPrices.low_price_bcx;
 			await tradesRepo.updateTrade(this.mongoClient, trade);
 
 			add_CARDS(trade.account, [

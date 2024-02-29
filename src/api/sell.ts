@@ -46,8 +46,6 @@ const sell_cards = async (mongoClient: MongoClient, bids: any) => {
 			if (!trade.sell) return;
 			trade.sell.tx_id = tx.id;
 			trade.sell.tx_count = (trade.sell.tx_count || 0) + 1;
-			let currentBidPrices = bids[trade.bid_idx]?.prices;
-			if (currentBidPrices) trade.sell.market_price = currentBidPrices[trade.card_id];
 
 			await tradesRepo.updateTrade(mongoClient, trade);
 			await tradesRepo.updateTotals(mongoClient, 0);

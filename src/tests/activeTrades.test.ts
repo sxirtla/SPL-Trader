@@ -174,7 +174,7 @@ describe('ActiveTrades', () => {
 					account: defaultAccount,
 					bcx: 0,
 					buy: { usd: 0.5 },
-					sell: { market_price: {} },
+					sell: {  },
 				},
 				{
 					uid: 'C7-321-dcba',
@@ -183,7 +183,7 @@ describe('ActiveTrades', () => {
 					account: defaultAccount,
 					bcx: 0,
 					buy: { usd: 1 },
-					sell: { market_price: {} },
+					sell: {  },
 				},
 			] as tradesRepo.Trade[])
 		);
@@ -217,7 +217,7 @@ describe('ActiveTrades', () => {
 					account: defaultAccount,
 					bcx: 0,
 					buy: { usd: 0.5 },
-					sell: { market_price: {}, tx_count: 1 },
+					sell: { tx_count: 1 },
 				},
 			] as tradesRepo.Trade[])
 		);
@@ -272,7 +272,6 @@ describe('ActiveTrades', () => {
 				profit_usd: 0.454,
 				sell: {
 					break_even: 0.516,
-					market_price: {},
 					tx_count: 2,
 					tx_id: 'txid1',
 					usd: 0.999,
@@ -294,7 +293,7 @@ describe('ActiveTrades', () => {
 					account: defaultAccount,
 					bcx: 0,
 					buy: { usd: 0.5 },
-					sell: { market_price: {}, tx_count: 1 },
+					sell: { tx_count: 1 },
 				},
 			] as tradesRepo.Trade[])
 		);

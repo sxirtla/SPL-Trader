@@ -30,7 +30,7 @@ describe('Sell', () => {
 			findTradeByCardIdSpy = jest
 				.spyOn(tradesRepo, 'findTradeByCardId')
 				.mockReturnValue(
-					Promise.resolve({ uid: 'C7-123-abcd', sell: { market_price: {} } } as tradesRepo.Trade)
+					Promise.resolve({ uid: 'C7-123-abcd', sell: { } } as tradesRepo.Trade)
 				);
 		});
 

@@ -31,7 +31,6 @@ export interface Trade extends WithId<Document> {
 		tx_count: number;
 		break_even: number;
 		tx_id?: string;
-		market_price?: MarketPrice;
 	};
 }
 
@@ -73,7 +72,7 @@ const findActiveTrades = async (client: MongoClient) => {
 
 const findTotalProfit = async (client: MongoClient): Promise<TotalProfit> => {
 	let profit = await repo.find(client, 'Trades', { _id: 'TOTAL' });
-	return profit[0] as TotalProfit;
+	return profit[0] as TotalProfit || { _id: 'TOTAL', profit_usd: 0, sold_cards: 0 };
 };
 
 const updateTotals = async (client: MongoClient, profit: number) => {
@@ -106,7 +105,7 @@ const reCalculateTotals = async (client: MongoClient): Promise<void> => {
 		const trade = finishedTrades[i];
 		totalProfit.sold_cards = (totalProfit.sold_cards || 0) + 1;
 		totalProfit.profit_usd += trade.profit_usd;
-		
+
 		if (!trade.sell_date) continue;
 		let d = new Date(trade.sell_date);
 		let dateKey = new Date(d.setDate(1)).toISOString().substring(0, 7);
