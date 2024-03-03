@@ -42,10 +42,9 @@ export default class ActiveTrades {
 
 			await this.checkTrade(trade, card_info, marketData);
 			if (trade.status_id != 0) continue;
-			let uidParts = trade.uid.match(/([C|G]\d+-\d+-).+([\w\d]{2})$/) || ['', '', ''];
 			this.tableLogs.push({
 				account: trade.account,
-				uid: uidParts[1] + uidParts[2],
+				uid: trade.uid.substring(0, 10),
 				name: card_info.details.name,
 				buy_price: trade.buy.usd,
 				sell_price: Number(trade.sell?.usd.toFixed(3)) || 0,
