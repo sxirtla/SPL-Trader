@@ -28,7 +28,7 @@ export default class ActiveTrades {
 	async Check(marketData: MarketData[] | null, page: number = 0) {
 		if (!marketData) return;
 
-		if (page === 0 && Date.now() - this.lastChecked < 2 * 60 * 60 * 1000) return;
+		if (page === 0 && Date.now() - this.lastChecked < 60 * 60 * 1000) return;
 		this.lastChecked = Date.now();
 
 		let activeTrades = await tradesRepo.findActiveTrades(this.mongoClient);
@@ -42,9 +42,10 @@ export default class ActiveTrades {
 
 			await this.checkTrade(trade, card_info, marketData);
 			if (trade.status_id != 0) continue;
+			let uidParts = trade.uid.match(/([C|G]\d+-\d+-).+([\w\d]{2})$/) || ['', '', ''];
 			this.tableLogs.push({
 				account: trade.account,
-				uid: trade.uid,
+				uid: uidParts[1] + uidParts[2],
 				name: card_info.details.name,
 				buy_price: trade.buy.usd,
 				sell_price: Number(trade.sell?.usd.toFixed(3)) || 0,
@@ -129,7 +130,7 @@ export default class ActiveTrades {
 				break_even: calculate_break_even(trade.buy.usd),
 			};
 			if (card_info.buy_price) calculate_profit(trade, Number(card_info.buy_price));
-			
+
 			await tradesRepo.updateTrade(this.mongoClient, trade);
 		}
 	}
@@ -161,6 +162,7 @@ export default class ActiveTrades {
 		pos = filteredPrices.length - 1;
 		let rarity: number = card_info.details.rarity;
 		let maxPosForRarity = -3 * rarity + 17; // 14 | 11 | 8 | 5
+		if (card_info.gold) maxPosForRarity = maxPosForRarity / 2.5; // 5.6 | 4.4 | 3.2| 2
 
 		if (pos == 0 || pos + 1 < maxPosForRarity) return null;
 

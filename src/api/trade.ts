@@ -393,9 +393,9 @@ https://hivehub.dev/tx/${tx.id}`
 
 		if (listings.length >= 10) {
 			let cardCounts = listings.reduce((prev, curr) => {
-				let cid_parts = curr.cards[0].match(/.+-(\d+)-.+/);
+				let cid_parts = curr.cards[0].match(/([C|G]).+-(\d+)-.+/);
 				if (!cid_parts) return prev;
-				let cid = cid_parts[1];
+				let cid = cid_parts[1]+cid_parts[2];
 				prev[cid] = prev[cid] ? prev[cid] + 1 : 1;
 				return prev;
 			}, {});
