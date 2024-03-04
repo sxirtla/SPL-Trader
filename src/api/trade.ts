@@ -124,14 +124,16 @@ https://hivehub.dev/tx/${tx.id}`
 		let marketPrice = buying_data.bcx > 1 ? buying_data.buy_price.low_price_bcx : buying_data.buy_price.low_price;
 		const sellPrice = sell.calculate_sellPrice(marketPrice as number, buying_data.price, bid.sell_for_pct_more);
 
-		sell.add_CARDS(acc, [{
-			cards: [buying_data.card_id],
-			currency: 'USD',
-			price: Number(sellPrice.toFixed(4)),
-			fee_pct: 600,
-			list_fee: 1,
-			list_fee_token: 'DEC',
-		}]);
+		sell.add_CARDS(acc, [
+			{
+				cards: [buying_data.card_id],
+				currency: 'USD',
+				price: Number(sellPrice.toFixed(4)),
+				fee_pct: 600,
+				list_fee: 1,
+				list_fee_token: 'DEC',
+			},
+		]);
 
 		let trade: Partial<tradesRepo.Trade> = {
 			account: acc,
@@ -165,9 +167,7 @@ https://hivehub.dev/tx/${tx.id}`
 
 		console.log('');
 		console.log(
-			chalk.bold.blue(
-				`will be selling ${buying_data.card_id} for: $${sellPrice} (profit: $${trade.profit_usd})`
-			)
+			chalk.bold.blue(`will be selling ${buying_data.card_id} for: $${sellPrice} (profit: $${trade.profit_usd})`)
 		);
 	}
 
@@ -391,15 +391,16 @@ https://hivehub.dev/tx/${tx.id}`
 		let listings = [parsedJson];
 		if (Array.isArray(parsedJson)) listings = [...parsedJson];
 
-		if (listings.length >= 10) {
+		let bidQuantities = this.bids.map((b) => b.max_quantity || 0);
+		if (listings.length > Math.max(...bidQuantities)) {
 			let cardCounts = listings.reduce((prev, curr) => {
 				let cid_parts = curr.cards[0].match(/([C|G]).+-(\d+)-.+/);
 				if (!cid_parts) return prev;
-				let cid = cid_parts[1]+cid_parts[2];
+				let cid = cid_parts[1] + cid_parts[2];
 				prev[cid] = prev[cid] ? prev[cid] + 1 : 1;
 				return prev;
 			}, {});
-			if (Object.values(cardCounts).some((quantity) => Number(quantity) >= 10)) return;
+			if (Object.values(cardCounts).some((quantity) => Number(quantity) > Math.max(...bidQuantities))) return;
 		}
 
 		let promises: Promise<CardToBuy>[] = [];

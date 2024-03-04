@@ -161,7 +161,7 @@ export default class ActiveTrades {
 		pos = filteredPrices.length - 1;
 		let rarity: number = card_info.details.rarity;
 		let maxPosForRarity = -3 * rarity + 17; // 14 | 11 | 8 | 5
-		if (card_info.gold) maxPosForRarity = maxPosForRarity / 2.5; // 5.6 | 4.4 | 3.2| 2
+		if (card_info.gold) maxPosForRarity = maxPosForRarity / 2.5 - 0.2; // 5.4 | 4.3 | 3| 1.8
 
 		if (pos == 0 || pos + 1 < maxPosForRarity) return null;
 
@@ -175,7 +175,8 @@ export default class ActiveTrades {
 			break;
 		}
 
-		newPrice = Math.max(newPrice, trade.sell?.break_even || calculate_break_even(trade.buy.usd));
+		let be = trade.sell?.break_even || calculate_break_even(trade.buy.usd);
+		newPrice = Math.max(newPrice, be * 1.01);
 
 		if (newPrice >= filteredPrices[pos].buy_price) return null;
 

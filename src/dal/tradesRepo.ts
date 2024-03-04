@@ -91,7 +91,7 @@ const updateTotals = async (client: MongoClient, profit: number) => {
 
 	let d = new Date();
 	totalProfit.edit_date = d.toISOString();
-	let currDateKey = new Date(d.setDate(1)).toISOString().substring(0, 7);
+	let currDateKey = new Date(d.setDate(2)).toISOString().substring(0, 7);
 	totalProfit.monthly[currDateKey] = totalProfit.monthly[currDateKey] + profit || profit;
 	totalProfit.profit_month = totalProfit.monthly[currDateKey];
 
