@@ -155,33 +155,38 @@ export default class ActiveTrades {
 		let cardPrices = await getCardPrices(card_info.card_detail_id, card_info.gold);
 		if (!cardPrices) return null;
 
-		let pos = cardPrices.findIndex((x: any) => x.uid === card_info.uid);
-		let filteredPrices = cardPrices.slice(0, pos).filter((c: any) => !accounts.includes(c.seller));
-		filteredPrices.push(cardPrices[pos]);
-		pos = filteredPrices.length - 1;
+		let posIndex = cardPrices.findIndex((x: any) => x.uid === card_info.uid);
+		let filteredPrices = cardPrices.slice(0, posIndex).filter((c: any) => !accounts.includes(c.seller));
+		filteredPrices.push(cardPrices[posIndex]);
+		posIndex = filteredPrices.length - 1;
 		let rarity: number = card_info.details.rarity;
-		let maxPosForRarity = -3 * rarity + 17; // 14 | 11 | 8 | 5
-		if (card_info.gold) maxPosForRarity = maxPosForRarity / 2.5 - 0.2; // 5.4 | 4.3 | 3| 1.8
+		let maxPosForRarity = -3 * rarity + 16; // 13 | 10 | 7 | 4
+		if (card_info.gold) maxPosForRarity = maxPosForRarity / 2.5; // 5.2 | 4 | 2.8 | 1.6
 
-		if (pos == 0 || pos + 1 < maxPosForRarity) return null;
+		if (posIndex == 0 || posIndex + 1 < maxPosForRarity) return null;
 
-		let newPrice = filteredPrices[0].buy_price - 0.001;
+		const be = (trade.sell?.break_even || calculate_break_even(trade.buy.usd)) * 1.01;
+		let newPrice = Math.max(filteredPrices[0].buy_price - 0.001, be);
 
-		for (let i = 1; i < Math.min(pos, maxPosForRarity); i++) {
+		for (let i = 1; i < Math.min(posIndex, maxPosForRarity); i++) {
 			const prev = filteredPrices[i - 1];
 			const curr = filteredPrices[i];
+			if (curr.buy_price < newPrice) {
+				maxPosForRarity++;
+				continue;
+			}
+			if (newPrice === be) newPrice = curr.buy_price - 0.001;
 			if ((curr.buy_price - prev.buy_price) / curr.buy_price < 0.08) continue;
 			newPrice = curr.buy_price - 0.001;
 			break;
 		}
 
-		let be = trade.sell?.break_even || calculate_break_even(trade.buy.usd);
-		newPrice = Math.max(newPrice, be * 1.01);
+		newPrice = Number(newPrice.toFixed(3));
 
-		if (newPrice >= filteredPrices[pos].buy_price) return null;
+		if (newPrice >= filteredPrices[posIndex].buy_price) return null;
 
 		let jsondata = {
-			ids: [filteredPrices[pos].market_id],
+			ids: [filteredPrices[posIndex].market_id],
 			new_price: newPrice,
 			list_fee: 1,
 			list_fee_token: 'DEC',
@@ -190,7 +195,7 @@ export default class ActiveTrades {
 			console.log('ERROR in hive.update_card_price:', e);
 			return null;
 		});
-		return tx ? { id: tx.id, oldPrice: filteredPrices[pos].buy_price, newPrice } : null;
+		return tx ? { id: tx.id, oldPrice: filteredPrices[posIndex].buy_price, newPrice } : null;
 	}
 
 	private async sellOldTrade(marketData: MarketData[], trade: tradesRepo.Trade, gold: boolean) {
