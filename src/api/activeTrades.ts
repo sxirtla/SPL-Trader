@@ -165,13 +165,13 @@ export default class ActiveTrades {
 
 		if (posIndex == 0 || posIndex + 1 < maxPosForRarity) return null;
 
-		const be = (trade.sell?.break_even || calculate_break_even(trade.buy.usd)) * 1.01;
+		const be = (trade.sell?.break_even || calculate_break_even(trade.buy.usd));
 		let newPrice = Math.max(filteredPrices[0].buy_price - 0.001, be);
 
 		for (let i = 1; i < Math.min(posIndex, maxPosForRarity); i++) {
 			const prev = filteredPrices[i - 1];
 			const curr = filteredPrices[i];
-			if (curr.buy_price < newPrice) {
+			if (curr.buy_price <= newPrice) {
 				maxPosForRarity++;
 				continue;
 			}
@@ -183,7 +183,7 @@ export default class ActiveTrades {
 
 		newPrice = Number(newPrice.toFixed(3));
 
-		if (newPrice >= filteredPrices[posIndex].buy_price) return null;
+		if (newPrice >= filteredPrices[posIndex].buy_price || newPrice <= be) return null;
 
 		let jsondata = {
 			ids: [filteredPrices[posIndex].market_id],

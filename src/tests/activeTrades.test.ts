@@ -268,8 +268,8 @@ describe('ActiveTrades', () => {
 			let getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
 				Promise.resolve([
 					{ uid: 'C7-123-dcba', buy_price: 1.5, xp: 1, market_id: 'market0' },
-					{ uid: 'C7-123-qwee', buy_price: 1.5, xp: 1, market_id: 'market1' },
-					{ uid: 'C7-123-efgh', buy_price: 1.5, xp: 1, market_id: 'market2' },
+					{ uid: 'C7-123-qwee', buy_price: 1.55, xp: 1, market_id: 'market1' },
+					{ uid: 'C7-123-efgh', buy_price: 1.59, xp: 1, market_id: 'market2' },
 					{ uid: 'C7-123-grrd', buy_price: 1.6, xp: 1, market_id: 'market3' },
 					{ uid: 'C7-123-qdfg', buy_price: 1.7, xp: 1, market_id: 'market4' },
 					{ uid: 'C7-123-abcd', buy_price: 2, xp: 1, market_id: 'market5' },
@@ -454,6 +454,33 @@ describe('ActiveTrades', () => {
 					xp: 1,
 				}
 			);
+		});
+
+		it('should not update card if all the cards bellow are less than break even', async () => {
+			//Arrange
+			let getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
+				Promise.resolve([
+					{ uid: 'C7-123-dcba', buy_price: 0.1, xp: 1, market_id: 'market0' },
+					{ uid: 'C7-123-qwee', buy_price: 0.2, xp: 1, market_id: 'market1' },
+					{ uid: 'C7-123-efgh', buy_price: 0.3, xp: 1, market_id: 'market2' },
+					{ uid: 'C7-123-grrd', buy_price: 0.4, xp: 1, market_id: 'market3' },
+					{ uid: 'C7-123-abcd', buy_price: 2, xp: 1, market_id: 'market4' },
+					{ uid: 'C7-123-abcd', buy_price: 3, xp: 1, market_id: 'market5' },
+				])
+			);
+			
+			let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+
+			//Act
+			let trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
+			await trades.Check(marketPrices);
+
+			//Assert
+			expect(findActiveTradesSpy).toHaveBeenCalledTimes(2);
+			expect(findCardInfoSpy).toHaveBeenCalledTimes(1);
+			expect(getCardPricesSpy).toHaveBeenCalledTimes(1);
+			expect(updateCardPriceSpy).not.toHaveBeenCalled();
+			expect(updateTradeSpy).not.toHaveBeenCalled();
 		});
 
 		it('should not update card price if pos is low and price difference is < 5%', async () => {
