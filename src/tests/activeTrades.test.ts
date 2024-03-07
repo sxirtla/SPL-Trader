@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { MongoClient } from 'mongodb';
 import { GlobalParams } from '../types/trade';
 import { TransactionConfirmation } from '@hiveio/dhive';
@@ -19,7 +21,7 @@ jest.mock('./../api/user');
 let ActiveTrades = require('./../api/activeTrades').default;
 
 describe('ActiveTrades', () => {
-	let defaultAccount = 'THIEF_BESTBOOM';
+	const defaultAccount = 'THIEF_BESTBOOM';
 
 	let marketPrices: market.MarketData[] = [];
 
@@ -38,10 +40,10 @@ describe('ActiveTrades', () => {
 
 	it('should call findActiveTrades once if there are no active trades', async () => {
 		//Arrange
-		let findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(Promise.resolve([]));
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(Promise.resolve([]));
 
 		//Act
-		let trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
+		const trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
 		await trades.Check([]);
 
 		//Assert
@@ -50,19 +52,19 @@ describe('ActiveTrades', () => {
 
 	it('should call findCardInfo on active trades', async () => {
 		//Arrange
-		let findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', xp: 1 },
 				{ uid: 'C7-321-dcba', xp: 1 },
 			] as tradesRepo.Trade[])
 		);
-		let findCardInfoSpy = jest
+		const findCardInfoSpy = jest
 			.spyOn(cardsApi, 'findCardInfo')
-			.mockReturnValue(Promise.resolve([{ player: defaultAccount, xp: 1, market_listing_type: 'sell' }]));
-		let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+			.mockReturnValue(Promise.resolve([{ player: defaultAccount, xp: 1, market_listing_type: 'sell' }] as any));
+		const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 		//Act
-		let trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
+		const trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
 		await trades.Check([]);
 
 		//Assert
@@ -73,13 +75,13 @@ describe('ActiveTrades', () => {
 
 	it('should update xp on active trades if it is not set', async () => {
 		//Arrange
-		let findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', account: defaultAccount },
 				{ uid: 'C7-321-dcba', account: defaultAccount },
 			] as tradesRepo.Trade[])
 		);
-		let findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
+		const findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
 			Promise.resolve([
 				{
 					uid: 'C7-123-abcd',
@@ -99,12 +101,12 @@ describe('ActiveTrades', () => {
 					last_buy_price: '2',
 					details: { name: 'test' },
 				},
-			])
+			] as any)
 		);
-		let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+		const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 		//Act
-		let trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
+		const trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
 		await trades.Check([]);
 
 		//Assert
@@ -115,24 +117,24 @@ describe('ActiveTrades', () => {
 
 	it('should call finishTrade based on sold card count', async () => {
 		//Arrange
-		let findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', xp: 1, buy: { usd: 9 }, sell: {} },
 				{ uid: 'C7-321-dcba', xp: 1, buy: { usd: 5 }, sell: {} },
 			] as tradesRepo.Trade[])
 		);
-		let findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
+		const findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', player: 'other' },
 				{ uid: 'C7-321-dcba', player: 'other' },
-			])
+			] as any)
 		);
-		let findCardSellPriceSpy = jest.spyOn(cardsApi, 'findCardSellPrice').mockReturnValue(Promise.resolve(10));
-		let finishTradeSpy = jest.spyOn(tradesRepo, 'finishTrade');
-		let transferFeeSpy = jest.spyOn(user, 'transferFee');
+		const findCardSellPriceSpy = jest.spyOn(cardsApi, 'findCardSellPrice').mockReturnValue(Promise.resolve(10));
+		const finishTradeSpy = jest.spyOn(tradesRepo, 'finishTrade');
+		const transferFeeSpy = jest.spyOn(user, 'transferFee');
 
 		//Act
-		let trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
+		const trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
 		await trades.Check([]);
 
 		//Assert
@@ -156,22 +158,22 @@ describe('ActiveTrades', () => {
 
 	it('should call closeTrade if card was combined or burned', async () => {
 		//Arrange
-		let findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', xp: 1, account: defaultAccount },
 				{ uid: 'C7-321-dcba', xp: 1, account: defaultAccount },
 			] as tradesRepo.Trade[])
 		);
-		let findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
+		const findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', player: defaultAccount, combined_card_id: 'C7-123-comb' },
 				{ uid: 'C7-321-dcba', player: defaultAccount, xp: 2 },
-			])
+			] as any)
 		);
-		let closeTradeSpy = jest.spyOn(tradesRepo, 'closeTrade');
+		const closeTradeSpy = jest.spyOn(tradesRepo, 'closeTrade');
 
 		//Act
-		let trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
+		const trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
 		await trades.Check([]);
 
 		//Assert
@@ -182,7 +184,7 @@ describe('ActiveTrades', () => {
 
 	it('should push object to selling_cards if card is not on the market', async () => {
 		//Arrange
-		let findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
 			Promise.resolve([
 				{
 					uid: 'C7-123-abcd',
@@ -204,16 +206,16 @@ describe('ActiveTrades', () => {
 				},
 			] as tradesRepo.Trade[])
 		);
-		let findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
+		const findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockReturnValue(
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', player: defaultAccount, xp: 1, gold: false },
 				{ uid: 'C7-321-dcba', player: defaultAccount, xp: 1, gold: true },
-			])
+			] as any)
 		);
-		let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+		const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 		//Act
-		let trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
+		const trades = new ActiveTrades({} as MongoClient, {} as GlobalParams);
 		await trades.Check(marketPrices);
 
 		//Assert
@@ -226,7 +228,7 @@ describe('ActiveTrades', () => {
 	describe('updateCardPrice', () => {
 
 		let findActiveTradesSpy: jest.SpyInstance<Promise<tradesRepo.Trade[]>>;
-		let findCardInfoSpy: jest.SpyInstance<Promise<any>>;
+		let findCardInfoSpy: jest.SpyInstance<Promise<cardsApi.CardInfo[]>>;
 		let updateCardPriceSpy: jest.SpyInstance<Promise<TransactionConfirmation | null>>;
 
 		beforeEach(() => {
@@ -255,7 +257,7 @@ describe('ActiveTrades', () => {
 						market_listing_type: 'SELL',
 						details: { rarity: 4 },
 					},
-				])
+				] as any)
 			);
 
 			updateCardPriceSpy = jest
@@ -265,7 +267,7 @@ describe('ActiveTrades', () => {
 
 		it('should update card price if position is low', async () => {
 			//Arrange
-			let getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
+			const getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
 				Promise.resolve([
 					{ uid: 'C7-123-dcba', buy_price: 1.5, xp: 1, market_id: 'market0' },
 					{ uid: 'C7-123-qwee', buy_price: 1.55, xp: 1, market_id: 'market1' },
@@ -273,12 +275,12 @@ describe('ActiveTrades', () => {
 					{ uid: 'C7-123-grrd', buy_price: 1.6, xp: 1, market_id: 'market3' },
 					{ uid: 'C7-123-qdfg', buy_price: 1.7, xp: 1, market_id: 'market4' },
 					{ uid: 'C7-123-abcd', buy_price: 2, xp: 1, market_id: 'market5' },
-				])
+				] as any)
 			);
-			let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
-			let trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
+			const trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
 			await trades.Check(marketPrices);
 
 			//Assert
@@ -312,19 +314,19 @@ describe('ActiveTrades', () => {
 
 		it('should update card price if other cards are selling for bellow break even', async () => {
 			//Arrange
-			let getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
+			const getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
 				Promise.resolve([
 					{ uid: 'C7-123-dcba', buy_price: 0.5, xp: 1, market_id: 'market0' },
 					{ uid: 'C7-123-qwee', buy_price: 0.9, xp: 1, market_id: 'market1' },
 					{ uid: 'C7-123-efgh', buy_price: 1, xp: 1, market_id: 'market2' },
 					{ uid: 'C7-123-grrd', buy_price: 1.1, xp: 1, market_id: 'market3' },
 					{ uid: 'C7-123-abcd', buy_price: 1.5, xp: 1, market_id: 'market4' },
-				])
+				] as any)
 			);
-			let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
-			let trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
+			const trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
 			await trades.Check(marketPrices);
 
 			//Assert
@@ -358,20 +360,20 @@ describe('ActiveTrades', () => {
 
 		it('should update card according to 8% rule', async () => {
 			//Arrange
-			let getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
+			const getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
 				Promise.resolve([
 					{ uid: 'C7-123-dcba', buy_price: 1.5, xp: 1, market_id: 'market0' },
 					{ uid: 'C7-123-qwee', buy_price: 1.6, xp: 1, market_id: 'market1' },
 					{ uid: 'C7-123-efgh', buy_price: 5, xp: 1, market_id: 'market2' },
 					{ uid: 'C7-123-grrd', buy_price: 7, xp: 1, market_id: 'market3' },
 					{ uid: 'C7-123-abcd', buy_price: 8, xp: 1, market_id: 'market4' },
-				])
+				] as any)
 			);
 			
-			let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
-			let trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
+			const trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
 			await trades.Check(marketPrices);
 
 			//Assert
@@ -405,7 +407,7 @@ describe('ActiveTrades', () => {
 
 		it('should update card to break even if lots of cards on the market bellow be', async () => {
 			//Arrange
-			let getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
+			const getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
 				Promise.resolve([
 					{ uid: 'C7-123-dcba', buy_price: 0.1, xp: 1, market_id: 'market0' },
 					{ uid: 'C7-123-qwee', buy_price: 0.2, xp: 1, market_id: 'market1' },
@@ -418,13 +420,13 @@ describe('ActiveTrades', () => {
 					{ uid: 'C7-123-grrd', buy_price: 0.9, xp: 1, market_id: 'market35' },
 					{ uid: 'C7-123-grrd', buy_price: 1.5, xp: 1, market_id: 'market35' },
 					{ uid: 'C7-123-abcd', buy_price: 2, xp: 1, market_id: 'market4' },
-				])
+				] as any)
 			);
 			
-			let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
-			let trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
+			const trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
 			await trades.Check(marketPrices);
 
 			//Assert
@@ -458,7 +460,7 @@ describe('ActiveTrades', () => {
 
 		it('should not update card if all the cards bellow are less than break even', async () => {
 			//Arrange
-			let getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
+			const getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
 				Promise.resolve([
 					{ uid: 'C7-123-dcba', buy_price: 0.1, xp: 1, market_id: 'market0' },
 					{ uid: 'C7-123-qwee', buy_price: 0.2, xp: 1, market_id: 'market1' },
@@ -466,13 +468,13 @@ describe('ActiveTrades', () => {
 					{ uid: 'C7-123-grrd', buy_price: 0.4, xp: 1, market_id: 'market3' },
 					{ uid: 'C7-123-abcd', buy_price: 2, xp: 1, market_id: 'market4' },
 					{ uid: 'C7-123-abcd', buy_price: 3, xp: 1, market_id: 'market5' },
-				])
+				] as any)
 			);
 			
-			let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
-			let trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
+			const trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
 			await trades.Check(marketPrices);
 
 			//Assert
@@ -485,17 +487,17 @@ describe('ActiveTrades', () => {
 
 		it('should not update card price if pos is low and price difference is < 5%', async () => {
 			//Arrange
-			let getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
+			const getCardPricesSpy = jest.spyOn(market, 'getCardPrices').mockReturnValue(
 				Promise.resolve([
 					{ uid: 'C7-123-dcba', buy_price: 1, xp: 1, market_id: 'market0' },
 					{ uid: 'C7-123-qwee', buy_price: 1.01, xp: 1, market_id: 'market1' },
 					{ uid: 'C7-123-abcd', buy_price: 1.03, xp: 1, market_id: 'market3' },
-				])
+				] as any)
 			);
-			let updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
+			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
-			let trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
+			const trades = new ActiveTrades({} as MongoClient, { accounts: { defaultAccount: {} } });
 			await trades.Check(marketPrices);
 
 			//Assert

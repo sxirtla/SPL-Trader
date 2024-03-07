@@ -35,22 +35,14 @@ export default class ActiveTrades {
 		activeTrades = activeTrades.slice(10 * page, 10 * (page + 1));
 		if (!activeTrades || activeTrades.length === 0) return;
 
-		let cards_info = await cardsApi.findCardInfo(activeTrades.map((t) => t.uid));
+		const cards_info = await cardsApi.findCardInfo(activeTrades.map((t) => t.uid));
 		for (const trade of activeTrades) {
-			let card_info = cards_info.find((c: { uid: string }) => c.uid === trade.uid);
+			const card_info = cards_info.find((c: { uid: string }) => c.uid === trade.uid);
 			if (!card_info) continue;
 
 			await this.checkTrade(trade, card_info, marketData);
 			if (trade.status_id != 0) continue;
-			this.tableLogs.push({
-				account: trade.account,
-				uid: trade.uid.substring(0, 10),
-				name: card_info.details.name,
-				buy_price: trade.buy.usd,
-				sell_price: Number(trade.sell?.usd.toFixed(3)) || 0,
-				profit_usd: Number(trade.profit_usd.toFixed(3)),
-				on_market: !!(card_info.market_id && card_info.market_listing_type === 'SELL'),
-			});
+			this.pushLogToTable(trade, card_info);
 		}
 
 		console.table(this.tableLogs);
@@ -58,7 +50,19 @@ export default class ActiveTrades {
 		await this.Check(marketData, ++page);
 	}
 
-	private async checkTrade(trade: tradesRepo.Trade, card_info: any, marketData: MarketData[]) {
+	private pushLogToTable(trade: tradesRepo.Trade, card_info: cardsApi.CardInfo){
+		this.tableLogs.push({
+			account: trade.account,
+			uid: trade.uid,
+			name: card_info.details.name,
+			buy_price: trade.buy.usd,
+			sell_price: Number(trade.sell?.usd.toFixed(3)) || 0,
+			profit_usd: Number(trade.profit_usd.toFixed(3)),
+			on_market: !!(card_info.market_id && card_info.market_listing_type === 'SELL'),
+		});
+	}
+
+	private async checkTrade(trade: tradesRepo.Trade, card_info: cardsApi.CardInfo, marketData: MarketData[]) {
 		await this.checkXp(trade, card_info);
 
 		if (card_info.player !== trade.account) {
@@ -76,7 +80,7 @@ export default class ActiveTrades {
 		if (trade.is_manual === true) return;
 
 		if (card_info.xp === 1 && card_info.market_id && card_info.market_listing_type === 'SELL') {
-			let updated = await this.updateCardPrice(card_info, trade, Object.keys(this.params.accounts));
+			const updated = await this.updateCardPrice(card_info, trade, Object.keys(this.params.accounts));
 			if (!updated) return;
 
 			calculate_profit(trade, updated.newPrice);
@@ -110,7 +114,7 @@ export default class ActiveTrades {
 		}
 	}
 
-	private async checkXp(trade: tradesRepo.Trade, card_info: any) {
+	private async checkXp(trade: tradesRepo.Trade, card_info: cardsApi.CardInfo) {
 		if (!trade.xp) {
 			trade.xp = card_info.xp;
 			trade.card_id = card_info.card_detail_id;
@@ -137,8 +141,8 @@ export default class ActiveTrades {
 	private async finish(trade: tradesRepo.Trade, params: GlobalParams) {
 		calculate_profit(trade, await cardsApi.findCardSellPrice(trade.uid, trade.account));
 
-		let fee = trade.profit_usd * ((params.profit_fee_pct || 5) / 100);
-		let signedTx = await hive.transfer_fee(trade.account, fee);
+		const fee = trade.profit_usd * ((params.profit_fee_pct || 5) / 100);
+		const signedTx = await hive.transfer_fee(trade.account, fee);
 		user.transferFee(signedTx);
 
 		await tradesRepo.finishTrade(this.mongoClient, trade);
@@ -151,15 +155,15 @@ export default class ActiveTrades {
 		);
 	}
 
-	private async updateCardPrice(card_info: any, trade: tradesRepo.Trade, accounts: string[]) {
-		let cardPrices = await getCardPrices(card_info.card_detail_id, card_info.gold);
+	private async updateCardPrice(card_info: cardsApi.CardInfo, trade: tradesRepo.Trade, accounts: string[]) {
+		const cardPrices = await getCardPrices(card_info.card_detail_id, card_info.gold);
 		if (!cardPrices) return null;
 
-		let posIndex = cardPrices.findIndex((x: any) => x.uid === card_info.uid);
-		let filteredPrices = cardPrices.slice(0, posIndex).filter((c: any) => !accounts.includes(c.seller));
+		let posIndex = cardPrices.findIndex((x) => x.uid === card_info.uid);
+		const filteredPrices = cardPrices.slice(0, posIndex).filter((c) => !accounts.includes(c.seller));
 		filteredPrices.push(cardPrices[posIndex]);
 		posIndex = filteredPrices.length - 1;
-		let rarity: number = card_info.details.rarity;
+		const rarity: number = card_info.details.rarity;
 		let maxPosForRarity = -3 * rarity + 16; // 13 | 10 | 7 | 4
 		if (card_info.gold) maxPosForRarity = maxPosForRarity / 2.5; // 5.2 | 4 | 2.8 | 1.6
 
@@ -185,13 +189,13 @@ export default class ActiveTrades {
 
 		if (newPrice >= filteredPrices[posIndex].buy_price || newPrice <= be) return null;
 
-		let jsondata = {
+		const jsondata = {
 			ids: [filteredPrices[posIndex].market_id],
 			new_price: newPrice,
 			list_fee: 1,
 			list_fee_token: 'DEC',
 		};
-		let tx = await hive.update_card_price(trade.account, jsondata).catch((e) => {
+		const tx = await hive.update_card_price(trade.account, jsondata).catch((e) => {
 			console.log('ERROR in hive.update_card_price:', e);
 			return null;
 		});

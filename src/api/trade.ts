@@ -27,7 +27,7 @@ export default class Trade {
 	private transaction_delay = 200;
 	private activeTrades: ActiveTrades;
 
-	constructor(private settings: LocalSettings, private card_details: any[], private mongoClient: MongoClient) {
+	constructor(private settings: LocalSettings, private card_details: any, private mongoClient: MongoClient) {
 		this.game_settings = readSettings();
 		this.accounts = Object.keys(settings.global_params.accounts);
 		hive.init(settings.global_params.preferred_hive_node);
@@ -332,7 +332,7 @@ https://hivehub.dev/tx/${tx.id}`
 					if (price > (bid.prices[card_id].low_price as number) * 1.5) {
 						if (this.sl_api_calls_per_minute > 50) continue;
 						this.sl_api_calls_per_minute++;
-						process.stdout.write(`|`);
+						process.stdout.write('|');
 						let card_full_info = card.edition ? card : (await cardsApi.findCardInfo([card.uid]))[0];
 						if (!card_full_info?.edition) continue;
 						card = card_full_info;
@@ -363,7 +363,7 @@ https://hivehub.dev/tx/${tx.id}`
 					bid_idx: indx,
 					card_id: listing.cards[0],
 					card_detail_id: card_id,
-					card_name: this.card_details.find((x) => x.id == card.card_detail_id).name,
+					card_name: this.card_details.find((x: any) => x.id == card.card_detail_id).name,
 					bcx: bcx,
 					card_cp: card_cp,
 					price: Number(price),
@@ -391,8 +391,9 @@ https://hivehub.dev/tx/${tx.id}`
 		let listings = [parsedJson];
 		if (Array.isArray(parsedJson)) listings = [...parsedJson];
 
-		let bidQuantities = this.bids.map((b) => b.max_quantity || 0);
-		if (listings.length > Math.max(...bidQuantities)) {
+		const bidQuantities = this.bids.map((b) => b.max_quantity || 0);
+		const minMaxCards = Math.min(Math.max(...bidQuantities), 10);
+		if (listings.length > minMaxCards) {
 			let cardCounts = listings.reduce((prev, curr) => {
 				let cid_parts = curr.cards[0].match(/([C|G]).+-(\d+)-.+/);
 				if (!cid_parts) return prev;
@@ -400,7 +401,7 @@ https://hivehub.dev/tx/${tx.id}`
 				prev[cid] = prev[cid] ? prev[cid] + 1 : 1;
 				return prev;
 			}, {});
-			if (Object.values(cardCounts).some((quantity) => Number(quantity) > Math.max(...bidQuantities))) return;
+			if (Object.values(cardCounts).some((quantity) => Number(quantity) > minMaxCards)) return;
 		}
 
 		let promises: Promise<CardToBuy>[] = [];

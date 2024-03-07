@@ -1,6 +1,6 @@
-import { Bid, BidCard, GlobalParams } from '../types/trade';
-import { colorToSplinter } from '../utility/helper';
-import { MarketData } from './market';
+import { type Bid, type BidCard, type GlobalParams } from '../types/trade'
+import { colorToSplinter } from '../utility/helper'
+import { type MarketData } from './market'
 
 const BID_TEMPLATE: Bid = {
 	id: 0,

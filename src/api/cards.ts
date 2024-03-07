@@ -22,6 +22,78 @@ type CARD_HISTORY = {
 	combined_cards: string;
 };
 
+export interface CardInfo {
+	player: string;
+	uid: string;
+	card_detail_id: number;
+	xp: number;
+	gold: boolean;
+	edition: number;
+	card_set: string;
+	collection_power: number;
+	market_id: null;
+	buy_price: null;
+	market_listing_type: null;
+	market_listing_status: null;
+	market_created_date: null;
+	rental_type: null;
+	rental_days: null;
+	rental_date: null;
+	next_rental_payment: null;
+	cancel_tx: null;
+	cancel_date: null;
+	cancel_player: null;
+	last_used_block: null;
+	last_used_player: null;
+	last_used_date: null;
+	last_transferred_block: number;
+	last_transferred_date: string;
+	alpha_xp: null;
+	delegated_to: string;
+	delegation_tx: string;
+	skin: null;
+	delegated_to_display_name: string;
+	display_name: string;
+	lock_days: null;
+	unlock_date: null;
+	wagon_uid: null;
+	stake_start_date: null;
+	stake_end_date: null;
+	stake_plot: null;
+	stake_region: null;
+	created_date: string;
+	created_block: number;
+	created_tx: string;
+	expiration_date: null;
+	last_buy_price: string;
+	last_buy_currency: string;
+	bcx: number;
+	land_base_pp: string;
+	land_dec_stake_needed: number;
+	details: Details;
+	combined_card_id: string;
+}
+
+export interface Details {
+	id: number;
+	name: string;
+	color: string;
+	type: string;
+	sub_type: null;
+	rarity: number;
+	drop_rate: number;
+	is_starter: boolean;
+	editions: string;
+	created_block_num: null;
+	last_update_tx: null;
+	total_printed: number;
+	is_promo: boolean;
+	tier: number;
+	secondary_color: null;
+	stake_type_id: number;
+	print_start_date: null;
+}
+
 const url_cards = 'https://api2.splinterlands.com/cards/get_details';
 const url_card_lookup = 'https://api2.splinterlands.com/cards/find?ids=';
 const url_card_history = 'https://api.splinterlands.com/cards/history?transfer_types=market&id=';
@@ -44,7 +116,7 @@ const downloadCardDetails = async (force: boolean = false) => {
 };
 
 const lastModifiedMinsAgo = () => {
-	if(!fs.existsSync(cards_details_file)) return Number.MAX_VALUE;
+	if (!fs.existsSync(cards_details_file)) return Number.MAX_VALUE;
 
 	let fileStat = fs.statSync(cards_details_file);
 
@@ -67,13 +139,13 @@ const readCardDetails = () => {
 	return cardsDetails;
 };
 
-const findCardInfo = (card_ids: string[]) =>
+const findCardInfo = (card_ids: string[]): Promise<CardInfo[]> =>
 	http
 		.get(url_card_lookup + card_ids.join(','))
 		.then((x) => x && x.json())
 		.catch((e) => {
 			console.log('Error while getting card details:', e.message);
-			return null;
+			return [];
 		});
 
 const findCardSellPrice = (card_id: string, acc: string): Promise<number> =>
@@ -87,14 +159,18 @@ const findCardSellPrice = (card_id: string, acc: string): Promise<number> =>
 			return 0;
 		});
 
-const calc_bcx = (c: {
-	card_detail_id: number;
-	xp: number;
-	alpha_xp?: number;
-	details?: { tier: number | null; id: number; rarity: number };
-	edition?: any;
-	gold: boolean;
-}, card_details: any[], game_settings: GameSettings) => {
+const calc_bcx = (
+	c: {
+		card_detail_id: number;
+		xp: number;
+		alpha_xp?: number;
+		details?: { tier: number | null; id: number; rarity: number };
+		edition?: any;
+		gold: boolean;
+	},
+	card_details: any[],
+	game_settings: GameSettings
+) => {
 	try {
 		const card = c?.xp > 1 ? { ...c, alpha_xp: 0 } : { ...c, alpha_xp: null };
 		let details = card.details || card_details.find((x) => x.id == card.card_detail_id);
@@ -117,14 +193,17 @@ const calc_bcx = (c: {
 	}
 };
 
-const getMaxXp = (details: { rarity: number; tier: number | null }, edition: number, gold: boolean, game_settings: GameSettings): number => {
+const getMaxXp = (
+	details: { rarity: number; tier: number | null },
+	edition: number,
+	gold: boolean,
+	game_settings: GameSettings
+): number => {
 	try {
 		let rarity = details.rarity;
 		let tier = details?.tier || 0;
 		if (edition == 4 || tier >= 4) {
-			let rates = gold
-				? game_settings.combine_rates_gold[rarity - 1]
-				: game_settings.combine_rates[rarity - 1];
+			let rates = gold ? game_settings.combine_rates_gold[rarity - 1] : game_settings.combine_rates[rarity - 1];
 			return rates[rates.length - 1];
 		} else return game_settings.xp_levels[rarity - 1][game_settings.xp_levels[rarity - 1].length - 1];
 	} catch (e: Error | any) {
@@ -154,7 +233,8 @@ const calc_cp = (
 		if (card.edition == 0) dec *= game_settings.dec.alpha_burn_bonus;
 		if (card.edition == 2) dec *= game_settings.dec.promo_burn_bonus;
 		let total_dec = dec + alpha_dec;
-		if (card.xp >= getMaxXp(details, card.edition, card.gold, game_settings)) total_dec *= game_settings.dec.max_burn_bonus;
+		if (card.xp >= getMaxXp(details, card.edition, card.gold, game_settings))
+			total_dec *= game_settings.dec.max_burn_bonus;
 		if (details?.tier >= 7) total_dec = total_dec / 2;
 
 		return total_dec;

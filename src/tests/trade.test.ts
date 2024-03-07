@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MongoClient } from 'mongodb';
 import { TransactionConfirmation } from '@hiveio/dhive';
 import fs from 'fs';
@@ -49,6 +50,7 @@ jest.mock('./../api/settings', () => ({
 }));
 
 let downloadCardDetails = cardsApi.downloadCardDetails as jest.Mock;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 downloadCardDetails = jest.fn(() => Promise.resolve());
 
 import * as user from '../api/user';
@@ -56,7 +58,7 @@ jest.mock('./../api/user');
 
 import * as hive from '../api/hive';
 jest.mock('./../api/hive');
-let generateKeySpy = jest.spyOn(hive, 'generateKey');
+const generateKeySpy = jest.spyOn(hive, 'generateKey');
 
 import * as market from '../api/market';
 jest.mock('./../api/market');
@@ -64,7 +66,7 @@ jest.mock('./../api/market');
 import Trade from './../api/trade';
 
 describe('Trade', () => {
-	let card_details_string = fs.readFileSync('./data/cardsDetails.json', { encoding: 'utf8' });
+	const card_details_string = fs.readFileSync('./data/cardsDetails.json', { encoding: 'utf8' });
 	const card_details = JSON.parse(card_details_string) as any[];
 	let local_settings = {} as LocalSettings;
 
@@ -110,7 +112,7 @@ describe('Trade', () => {
 				auto_set_buy_price: true,
 				max_quantity: 5,
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
 			trade.setup();
@@ -118,11 +120,11 @@ describe('Trade', () => {
 			//Assert
 			expect(generateKeySpy).toHaveBeenCalled();
 			expect(Object.keys(local_settings.bids[0].cards || {}).length).toBe(1);
-			// @ts-ignore Object is possibly 'undefined'
+			// @ts-expect-error Object is possibly 'undefined'
 			expect(local_settings.bids[0].cards[437]).toBeTruthy();
-			// @ts-ignore Object is possibly 'undefined'
+			// @ts-expect-error Object is possibly 'undefined'
 			expect(local_settings.bids[0].cards[437].bcx).toBe(0);
-			// @ts-ignore Object is possibly 'undefined'
+			// @ts-expect-error Object is possibly 'undefined'
 			expect(local_settings.bids[0].cards[437].quantity).toBe(5);
 		});
 
@@ -133,7 +135,7 @@ describe('Trade', () => {
 				comment: 'Grum Flameblade',
 				cards: { 447: { max_quantity: 1 } },
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
 			trade.setup();
@@ -149,7 +151,7 @@ describe('Trade', () => {
 				comment: 'Grum Flameblade',
 				cards: { 447: { max_bcx_price: 3 } },
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
 			trade.setup();
@@ -165,15 +167,15 @@ describe('Trade', () => {
 				comment: 'Grum Flameblade',
 				cards: { 447: { max_bcx_price: 3, max_bcx: 5, max_quantity: 3 } },
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
 			trade.setup();
 
 			//Assert
-			// @ts-ignore Object is possibly 'undefined'
+			// @ts-expect-error Object is possibly 'undefined'
 			expect(local_settings.bids[0].cards[447].max_quantity).toBe(5);
-			// @ts-ignore Object is possibly 'undefined'
+			// @ts-expect-error Object is possibly 'undefined'
 			expect(local_settings.bids[0].cards[447].quantity).toBe(5);
 		});
 
@@ -193,15 +195,15 @@ describe('Trade', () => {
 				max_quantity: 5,
 				only_modern: true,
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
 			trade.setup();
 
 			//Assert
-			// @ts-ignore Object is possibly 'undefined'
+			// @ts-expect-error Object is possibly 'undefined'
 			expect(local_settings.bids[0].cards[222]).toBeFalsy();
-			// @ts-ignore Object is possibly 'undefined'
+			// @ts-expect-error Object is possibly 'undefined'
 			expect(local_settings.bids[0].cards[461]).toBeTruthy();
 		});
 	});
@@ -242,7 +244,7 @@ describe('Trade', () => {
 			local_settings.bids[0].cards[168].quantity = 1;
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-FA5C2EF9TC'], currency: 'USD', price: 0.48, fee_pct: 500.0 },
 				'123456'
 			);
@@ -259,7 +261,7 @@ describe('Trade', () => {
 			//aranged in before each
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-FA5C2EF9TC'], currency: 'USD', price: 'NaN', fee_pct: 500.0 },
 				'123456'
 			);
@@ -272,7 +274,7 @@ describe('Trade', () => {
 			//aranged in before each
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-FA5C2EF9TC'], currency: 'USD', price: 0.009, fee_pct: 500.0 },
 				'123456'
 			);
@@ -285,7 +287,7 @@ describe('Trade', () => {
 			//aranged in before each
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4168-FA5C2EF9TC'], currency: 'USD', price: 0.5, fee_pct: 500.0 },
 				'123456'
 			);
@@ -298,7 +300,7 @@ describe('Trade', () => {
 			//aranged in before each
 
 			//Act
-			let res = await _trade.check_desired({ cards: [], currency: 'USD', price: 0.5, fee_pct: 500.0 }, '123456');
+			const res = await _trade.check_desired({ cards: [], currency: 'USD', price: 0.5, fee_pct: 500.0 }, '123456');
 
 			//Assert
 			expect(res).toStrictEqual({});
@@ -308,7 +310,7 @@ describe('Trade', () => {
 			//aranged in before each
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-1-FA5C2EF9TC'], currency: 'USD', price: 0.5, fee_pct: 500.0 },
 				'123456'
 			);
@@ -323,7 +325,7 @@ describe('Trade', () => {
 			local_settings.bids[0].cards[168].quantity = 0;
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-FA5C2EF9TC'], currency: 'USD', price: 0.49, fee_pct: 500.0 },
 				'123456'
 			);
@@ -337,7 +339,7 @@ describe('Trade', () => {
 			local_settings.bids[0].gold_only = false;
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['G4-168-FA5C2EF9TC'], currency: 'USD', price: 0.49, fee_pct: 500.0 },
 				'123456'
 			);
@@ -351,7 +353,7 @@ describe('Trade', () => {
 			local_settings.bids[0].gold_only = true;
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-FA5C2EF9TC'], currency: 'USD', price: 0.49, fee_pct: 500.0 },
 				'123456'
 			);
@@ -364,7 +366,7 @@ describe('Trade', () => {
 			//aranged in before each
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-FA5C2EF9TC'], currency: 'USD', price: 0.6, fee_pct: 500.0 },
 				'123456'
 			);
@@ -381,7 +383,7 @@ describe('Trade', () => {
 			local_settings.bids[0].prices[168].buy_price = 1;
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-FA5C2EF9TC'], currency: 'USD', price: 2, fee_pct: 500.0 },
 				'123456'
 			);
@@ -397,7 +399,7 @@ describe('Trade', () => {
 			// @ts-ignore Object is possibly 'undefined'
 			local_settings.bids[0].cards[168].bcx = 1;
 
-			let findCardInfoSpy = jest
+			const findCardInfoSpy = jest
 				.spyOn(cardsApi, 'findCardInfo')
 				.mockClear()
 				.mockImplementation((id) => {
@@ -414,11 +416,11 @@ describe('Trade', () => {
 							alpha_xp: 0,
 							details: { id: 168, rarity: 1, editions: '4', tier: null },
 						},
-					]);
+					] as any);
 				});
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-bcx5'], currency: 'USD', price: 2, fee_pct: 500.0 },
 				'123456'
 			);
@@ -432,7 +434,7 @@ describe('Trade', () => {
 			//aranged in before each
 			local_settings.bids[0].min_cp_per_usd = 1000;
 
-			let findCardInfoSpy = jest
+			const findCardInfoSpy = jest
 				.spyOn(cardsApi, 'findCardInfo')
 				.mockClear()
 				.mockImplementation((id) => {
@@ -449,11 +451,11 @@ describe('Trade', () => {
 							alpha_xp: 0,
 							details: { id: `168`, rarity: 1, editions: '4', tier: null },
 						},
-					]);
+					] as any);
 				});
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-bcx5'], currency: 'USD', price: 1.5, fee_pct: 500.0 },
 				'123456'
 			);
@@ -467,7 +469,7 @@ describe('Trade', () => {
 			//aranged in before each
 			local_settings.bids[0].bellow_burn_value = true;
 
-			let findCardInfoSpy = jest
+			const findCardInfoSpy = jest
 				.spyOn(cardsApi, 'findCardInfo')
 				.mockClear()
 				.mockImplementation((id) => {
@@ -484,11 +486,11 @@ describe('Trade', () => {
 							alpha_xp: 0,
 							details: { id: 171, rarity: 1, editions: '4', tier: null },
 						},
-					]);
+					] as any);
 				});
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-171-bcx5'], currency: 'USD', price: 0.5, fee_pct: 500.0 },
 				'123456'
 			);
@@ -511,10 +513,10 @@ describe('Trade', () => {
 				prices: { 168: { buy_price: 0, low_price: 0.8 } },
 			});
 
-			let findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockClear();
+			const findCardInfoSpy = jest.spyOn(cardsApi, 'findCardInfo').mockClear();
 
 			//Act
-			let res = await _trade.check_desired(
+			const res = await _trade.check_desired(
 				{ cards: ['C4-168-bcx5'], currency: 'USD', price: 0.4, fee_pct: 500.0 },
 				'123456'
 			);
@@ -589,7 +591,7 @@ describe('Trade', () => {
 				buy_pct_below_market: 10,
 				gold_only: true,
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
 			await trade.get_marketData_and_update_bid_prices();
@@ -609,7 +611,7 @@ describe('Trade', () => {
 				cards: { 447: { max_bcx_price: 3.55, max_quantity: 5, max_bcx: 5, bcx: 5, quantity: 5 } },
 				gold_only: false,
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
 			await trade.get_marketData_and_update_bid_prices();
@@ -631,10 +633,10 @@ describe('Trade', () => {
 				buy_pct_below_market: 10,
 				gold_only: false,
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
-			let prices = await trade.get_marketData_and_update_bid_prices();
+			const prices = await trade.get_marketData_and_update_bid_prices();
 
 			//Assert
 			expect(prices).toBe(null);
@@ -649,7 +651,7 @@ describe('Trade', () => {
 				bellow_burn_value: true,
 				gold_only: false,
 			});
-			let trade = new Trade(local_settings, card_details, {} as MongoClient);
+			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
 			await trade.get_marketData_and_update_bid_prices();
@@ -662,7 +664,7 @@ describe('Trade', () => {
 
 	describe('process, prepare_to_buy', () => {
 		let _trade: any;
-		let buy_cards_spy = jest.spyOn(hive, 'buy_cards').mockImplementation((acc: string, data: any) => {
+		const buy_cards_spy = jest.spyOn(hive, 'buy_cards').mockImplementation((acc: string, data: any) => {
 			return Promise.resolve({ id: data.items[0] + '_buy_cards' } as TransactionConfirmation);
 		});
 
@@ -718,10 +720,10 @@ describe('Trade', () => {
 
 		it('should return undefined if opration is not custom_json', async () => {
 			//Arange
-			let opperation = { op: ['test'] };
+			const opperation = { op: ['test'] };
 
 			//Act
-			let resp = await _trade.process(opperation);
+			const resp = await _trade.process(opperation);
 
 			//Assert
 			expect(resp).toBeUndefined();
@@ -730,7 +732,7 @@ describe('Trade', () => {
 
 		it('should call buy_cards if everything passed', async () => {
 			//Arange
-			let cards_to_buy: CardToBuy[] = [
+			const cards_to_buy: CardToBuy[] = [
 				{
 					seller_tx_id: '123',
 					bid_idx: 0,
@@ -763,7 +765,7 @@ describe('Trade', () => {
 			buy_cards_spy.mockClear();
 
 			//Act
-			let res = await _trade.prepare_to_buy(
+			const res = await _trade.prepare_to_buy(
 				_trade.accounts[0],
 				[null, null, undefined, ''],
 				new Date(Date.now() - 14400000 - 7000).toLocaleString()
@@ -777,8 +779,8 @@ describe('Trade', () => {
 		it('should return undefined if buy_cards throws exception', async () => {
 			//Arange
 			buy_cards_spy.mockClear();
-			let buy_cards_spy_local = jest.spyOn(hive, 'buy_cards').mockRejectedValue('mock error');
-			let cards_to_buy: CardToBuy[] = [
+			const buy_cards_spy_local = jest.spyOn(hive, 'buy_cards').mockRejectedValue('mock error');
+			const cards_to_buy: CardToBuy[] = [
 				{
 					seller_tx_id: '123',
 					bid_idx: 0,
@@ -813,7 +815,7 @@ describe('Trade', () => {
 			getUsableBalanceMock.mockImplementation((username: string, options: any) => 400);
 			await _trade.get_current_balance(_trade.accounts[0]);
 
-			let cards_to_buy: CardToBuy[] = [
+			const cards_to_buy: CardToBuy[] = [
 				{
 					seller_tx_id: '123',
 					bid_idx: 0,
@@ -858,7 +860,7 @@ describe('Trade', () => {
 					},
 				};
 			});
-			let cards_to_buy: CardToBuy[] = [
+			const cards_to_buy: CardToBuy[] = [
 				{
 					seller_tx_id: '123',
 					bid_idx: 0,
@@ -915,7 +917,7 @@ describe('Trade', () => {
 			jest.spyOn(_trade, 'run_job');
 			jest.spyOn(_trade, 'process');
 			_trade.sl_api_calls_per_minute = 100;
-			let time = Date.now() - 50 * 1000;
+			const time = Date.now() - 50 * 1000;
 			_trade.minute_timer = time;
 
 			//Act
