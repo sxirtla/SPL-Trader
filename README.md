@@ -15,24 +15,46 @@ The bot streams the HIVE blockchain and listens for new sell orders. You can set
 ## Installation
 You can run the app using the Nodejs on local machine or run it inside a Docker container. Please follow the instructions bellow depanding on your choice.
 
-###Run with Node
-1. Download and install [Node.js](https://nodejs.org/)
+### Run with Node
+1. Download and install [Node.js](https://nodejs.org/) and [Git](https://git-scm.com/)
 2. Install MongoDB locally or create a free account at [MongoDB.com](https://www.mongodb.com/)
 3. Link your Splinterlands account to [monstercards.store](https://monstercards.store/ref/d1434763-5b3c-496d-9d5a-b82e8376cfc1) for receiving 3% cashback
-4. Rename config-example.json to config.json and fill in the data
-5. Open cmd (for Windows) or terminal (for Mac and Linux) in the project folder and run:
+4. Clone the repo via cmd (for Windows) or terminal (for Mac and Linux): 
+```sh
+git clone https://github.com/sxirtla/SPL-Trader.git
+```
+5. Go to the repo directory
+```sh
+cd SPL-Trader
+```
+6. Rename config-example.json to config.json and fill in the data
+7. Run following commands:
 
-`npm install`
+```sh
+npm install
+```
 
-`npm start`
+```sh
+npm start
+```
 
-###Run with Docker
-1. Download and install [Docker](https://docs.docker.com/get-docker/)
+### Run with Docker
+1. Download and install [Docker](https://docs.docker.com/get-docker/) and [Git](https://git-scm.com/)
 2. Link your Splinterlands account to [monstercards.store](https://monstercards.store/ref/d1434763-5b3c-496d-9d5a-b82e8376cfc1) for receiving 3% cashback
-3. Rename config-example.json to config.json and fill in the data
-4. Open cmd (for Windows) or terminal (for Mac and Linux) in the project folder and run:
+3. Clone the repo via cmd (for Windows) or terminal (for Mac and Linux): 
+```sh
+git clone https://github.com/sxirtla/SPL-Trader.git
+```
+4. Go to the repo directory
+```sh
+cd SPL-Trader
+```
+5. Rename config-example.json to config.json and fill in the data
+6. Run following command:
 
-`docker compose up`
+```sh
+docker compose up
+```
 
 ## Config
 The config.json file is where you can set the bot's parameters and specify your account info. An example file (config-example.json) is included in the folder.
