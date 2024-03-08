@@ -361,13 +361,13 @@ https://hivehub.dev/tx/${tx.id}`
 				result = {
 					seller_tx_id: trx_id,
 					bid_idx: indx,
+					fee_pct: listing.fee_pct || 6,
 					card_id: listing.cards[0],
 					card_detail_id: card_id,
 					card_name: this.card_details.find((x: any) => x.id == card.card_detail_id).name,
 					bcx: bcx,
 					card_cp: card_cp,
 					price: Number(price),
-					fee_pct: listing.fee_pct || 6,
 					buy_price: bid.prices[card_id],
 				};
 				break;
@@ -421,7 +421,9 @@ https://hivehub.dev/tx/${tx.id}`
 
 			console.log(cards_to_buy);
 
-			this.accounts.forEach((acc) =>
+			for (let i = 0; i < this.accounts.length; i++) {
+				const acc = this.accounts[i];
+				console.log(`prepare_to_buy for ${acc}`, Date.now());
 				this.prepare_to_buy(
 					acc,
 					[...cards_to_buy],
@@ -429,8 +431,9 @@ https://hivehub.dev/tx/${tx.id}`
 					operation.block
 				).catch((e) => {
 					console.log('ERROR in prepare_to_buy:', e);
-				})
-			);
+				});
+				await sleep(50);
+			}
 		});
 	}
 

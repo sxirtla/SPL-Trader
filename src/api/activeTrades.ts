@@ -13,10 +13,9 @@ type TradeLog = {
 	account: string;
 	uid: string;
 	name: string;
-	buy_price: number;
-	sell_price: number;
-	profit_usd: number;
-	on_market: boolean;
+	buy: number;
+	sell: number;
+	profit: number;
 };
 
 export default class ActiveTrades {
@@ -35,14 +34,14 @@ export default class ActiveTrades {
 		activeTrades = activeTrades.slice(10 * page, 10 * (page + 1));
 		if (!activeTrades || activeTrades.length === 0) return;
 
-		const cards_info = await cardsApi.findCardInfo(activeTrades.map((t) => t.uid));
+		const cardsInfo = await cardsApi.findCardInfo(activeTrades.map((t) => t.uid));
 		for (const trade of activeTrades) {
-			const card_info = cards_info.find((c: { uid: string }) => c.uid === trade.uid);
-			if (!card_info) continue;
+			const cardInfo = cardsInfo.find((c: { uid: string }) => c.uid === trade.uid);
+			if (!cardInfo) continue;
 
-			await this.checkTrade(trade, card_info, marketData);
+			await this.checkTrade(trade, cardInfo, marketData);
 			if (trade.status_id != 0) continue;
-			this.pushLogToTable(trade, card_info);
+			this.pushLogToTable(trade, cardInfo);
 		}
 
 		console.table(this.tableLogs);
@@ -50,15 +49,15 @@ export default class ActiveTrades {
 		await this.Check(marketData, ++page);
 	}
 
-	private pushLogToTable(trade: tradesRepo.Trade, card_info: cardsApi.CardInfo){
+	private pushLogToTable(trade: tradesRepo.Trade, card_info: cardsApi.CardInfo) {
+		const onMarket = !!(card_info.market_id && card_info.market_listing_type === 'SELL');
 		this.tableLogs.push({
 			account: trade.account,
 			uid: trade.uid,
 			name: card_info.details.name,
-			buy_price: trade.buy.usd,
-			sell_price: Number(trade.sell?.usd.toFixed(3)) || 0,
-			profit_usd: Number(trade.profit_usd.toFixed(3)),
-			on_market: !!(card_info.market_id && card_info.market_listing_type === 'SELL'),
+			buy: trade.buy.usd,
+			sell: onMarket ? Number(trade.sell?.usd.toFixed(3)) || 0 : 0,
+			profit: onMarket ? Number(trade.profit_usd.toFixed(3)) : 0,
 		});
 	}
 
@@ -114,28 +113,28 @@ export default class ActiveTrades {
 		}
 	}
 
-	private async checkXp(trade: tradesRepo.Trade, card_info: cardsApi.CardInfo) {
-		if (!trade.xp) {
-			trade.xp = card_info.xp;
-			trade.card_id = card_info.card_detail_id;
-			trade.card_name = card_info.details.name;
-			trade.create_date = trade.create_date || new Date().toISOString();
-			trade.bcx = trade.bcx || card_info.bcx;
-			trade.profit_usd = trade.profit_usd || 0;
-			trade.profit_margin = trade.profit_margin || 0;
-			trade.status_id = 0;
-			trade.status = 'Active';
-			trade.buy = trade.buy || { usd: Number(card_info.last_buy_price) || 0 };
-			trade.sell = trade.sell || {
-				usd: Number(card_info.buy_price) || 0,
-				tx_id: card_info.market_id || '',
-				tx_count: card_info.market_listing_type === 'SELL' ? 1 : 0,
-				break_even: calculate_break_even(trade.buy.usd),
-			};
-			if (card_info.buy_price) calculate_profit(trade, Number(card_info.buy_price));
+	private async checkXp(trade: tradesRepo.Trade, cardInfo: cardsApi.CardInfo): Promise<void> {
+		if (trade.xp) return;
 
-			await tradesRepo.updateTrade(this.mongoClient, trade);
-		}
+		trade.xp = cardInfo.xp;
+		trade.card_id = cardInfo.card_detail_id;
+		trade.card_name = cardInfo.details.name;
+		trade.create_date = trade.create_date || new Date().toISOString();
+		trade.bcx = trade.bcx || cardInfo.bcx;
+		trade.profit_usd = trade.profit_usd || 0;
+		trade.profit_margin = trade.profit_margin || 0;
+		trade.status_id = 0;
+		trade.status = 'Active';
+		trade.buy = trade.buy || { usd: Number(cardInfo.last_buy_price) || 0 };
+		trade.sell = trade.sell || {
+			usd: Number(cardInfo.buy_price) || 0,
+			tx_id: cardInfo.market_id || '',
+			tx_count: cardInfo.market_listing_type === 'SELL' ? 1 : 0,
+			break_even: calculate_break_even(trade.buy.usd),
+		};
+		if (cardInfo.buy_price) calculate_profit(trade, Number(cardInfo.buy_price));
+
+		await tradesRepo.updateTrade(this.mongoClient, trade);
 	}
 
 	private async finish(trade: tradesRepo.Trade, params: GlobalParams) {
@@ -169,7 +168,7 @@ export default class ActiveTrades {
 
 		if (posIndex == 0 || posIndex + 1 < maxPosForRarity) return null;
 
-		const be = (trade.sell?.break_even || calculate_break_even(trade.buy.usd));
+		const be = trade.sell?.break_even || calculate_break_even(trade.buy.usd);
 		let newPrice = Math.max(filteredPrices[0].buy_price - 0.001, be);
 
 		for (let i = 1; i < Math.min(posIndex, maxPosForRarity); i++) {

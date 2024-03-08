@@ -1,6 +1,6 @@
-import { type Bid, type BidCard, type GlobalParams } from '../types/trade'
-import { colorToSplinter } from '../utility/helper'
-import { type MarketData } from './market'
+import { type Bid, type BidCard, type GlobalParams } from '../types/trade';
+import { colorToSplinter } from '../utility/helper';
+import { type MarketData } from './market';
 
 const BID_TEMPLATE: Bid = {
 	id: 0,
@@ -80,15 +80,15 @@ const generateBidCards = (bid: Bid, card_details: any) => {
 	}
 
 	cards_tmp.forEach(
-        (tmp: any) =>
-            ((bid.cards as {[x: number]: BidCard})[tmp.id] = {
-                max_quantity: bid.max_quantity,
-                quantity: bid.max_quantity,
-                max_bcx: bid.max_bcx,
-                bcx: bid.max_bcx,
-                max_bcx_price: bid.max_bcx_price,
-            })
-    );
+		(tmp: any) =>
+			((bid.cards as { [x: number]: BidCard })[tmp.id] = {
+				max_quantity: bid.max_quantity,
+				quantity: bid.max_quantity,
+				max_bcx: bid.max_bcx,
+				bcx: bid.max_bcx,
+				max_bcx_price: bid.max_bcx_price,
+			})
+	);
 };
 
 const setupBids = (bids: Bid[], card_details: any) => {
@@ -128,8 +128,7 @@ const generateBidPrices = (bid: Bid, pm_bids: any, marketPrices: MarketData[], o
 			let card = marketPrices.find((c) => c.card_detail_id == cardId && c.gold == bid.gold_only);
 
 			let pm_bid = pm_bids.bids.find(
-				(b: { card_detail_id: number; gold: boolean }) =>
-					b.card_detail_id == cardId && b.gold == bid.gold_only
+				(b: { card_detail_id: number; gold: boolean }) => b.card_detail_id == cardId && b.gold == bid.gold_only
 			);
 			if (!bid.prices) bid.prices = [];
 			bid.prices[cardId] = {
@@ -160,15 +159,15 @@ const generateBidPrices = (bid: Bid, pm_bids: any, marketPrices: MarketData[], o
 		//better way would be to see the average sell price for 24h but there is no easy way to do it
 		const price_bid_diff = Math.min(1 - pm_bid / card.low_price, 0.2);
 		let buy_price = Math.min(
-			pm_bid * (price_bid_diff + 1),//limit buy price of undesired cards by 20% above the peakmonsters bids
+			pm_bid * (price_bid_diff + 1), //limit buy price of undesired cards by 20% above the peakmonsters bids
 			card.low_price * (1 - bellow_market / 100),
 			bid.cards[card.card_detail_id].max_bcx_price || Number.MAX_VALUE
 		);
 
 		let min_profit = options.min_profit_usd || 0.01;
-		let potential_sell_price = Math.max(card.low_price * 0.98, card.low_price - 0.1);
+		let potential_sell_price = Math.max(card.low_price * 0.98, card.low_price - 0.001);
 		let potential_profit = potential_sell_price * 0.94 - buy_price * 0.97;
-		if (potential_profit < min_profit){
+		if (potential_profit < min_profit) {
 			buy_price -= min_profit - potential_profit;
 		}
 
@@ -182,9 +181,9 @@ const generateBidPrices = (bid: Bid, pm_bids: any, marketPrices: MarketData[], o
 			low_price: card.low_price,
 			low_price_bcx: card.low_price_bcx,
 			pm_bid: pm_bid,
-			buy_price: buy_price
+			buy_price: buy_price,
 		};
 	}
-}
+};
 
 export { setupBids, generateBidPrices };
