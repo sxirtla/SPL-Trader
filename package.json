@@ -1,35 +1,32 @@
 {
-  "name": "spl-trader",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "npm run build && node dist/index.js",
-    "dev": "ts-node-dev --poll src/index.ts",
-    "test": "jest --watchAll",
-    "cover": "jest --coverage",
-    "build": "tsc -p .",
-    "buildw": "tsc -w -p ."
-  },
-  "keywords": [],
-  "author": "altryx",
-  "license": "ISC",
-  "dependencies": {
-    "@hiveio/dhive": "^1.2.8",
-    "chalk": "^4.1.2",
-    "json-validator-utill": "^1.0.5",
-    "mongodb": "^6.3.0",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
-    "@types/jest": "^29.5.11",
-    "@types/node": "^20.11.13",
-    "@typescript-eslint/eslint-plugin": "^7.1.1",
-    "@typescript-eslint/parser": "^7.1.1",
-    "eslint": "^8.57.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.0.5",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.4.2"
-  }
+	"name": "spl-trader",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"start": "npm run build && node dist/index.js",
+		"dev": "ts-node-dev --poll src/index.ts",
+		"test": "jest --watchAll",
+		"cover": "jest --coverage",
+		"build": "tsc -p .",
+		"buildw": "tsc -w -p ."
+	},
+	"keywords": [],
+	"author": "altryx",
+	"license": "ISC",
+	"dependencies": {
+		"@hiveio/dhive": "^1.2.8",
+		"chalk": "^4.1.2",
+		"json-validator-utill": "^1.0.5",
+		"mongodb": "^6.3.0",
+		"node-fetch": "^3.3.2"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.5.11",
+		"@types/node": "^20.11.13",
+		"jest": "^29.7.0",
+		"ts-jest": "^29.0.5",
+		"ts-node-dev": "^2.0.0",
+		"typescript": "^5.4.2"
+	}
 }

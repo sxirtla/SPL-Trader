@@ -153,13 +153,13 @@ const generateBidPrices = (bid: Bid, pm_bids: any, marketPrices: MarketData[], o
 				(b: { card_detail_id: number; gold: boolean }) =>
 					b.card_detail_id == card.card_detail_id && b.gold == bid.gold_only
 			)?.usd_price || 0;
-		//if difference between low price and pm bid is > 20, this card is not desired by many and will be hard to sell
+		//if difference between low price and pm bid is > 10, this card is not desired by many and will be hard to sell
 		//also this is needed to protect form sudden spike in price
 		//for example if someone buys 100 cards and price spikes from 1$ to 10$ but the bids will stay the same
 		//better way would be to see the average sell price for 24h but there is no easy way to do it
-		const price_bid_diff = Math.min(1 - pm_bid / card.low_price, 0.2);
+		const price_bid_diff = Math.min(1 - pm_bid / card.low_price, 0.1);
 		let buy_price = Math.min(
-			pm_bid * (price_bid_diff + 1), //limit buy price of undesired cards by 20% above the peakmonsters bids
+			pm_bid * (price_bid_diff + 1), //limit buy price of undesired cards by 10% above the peakmonsters bids
 			card.low_price * (1 - bellow_market / 100),
 			bid.cards[card.card_detail_id].max_bcx_price || Number.MAX_VALUE
 		);

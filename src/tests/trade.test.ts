@@ -64,6 +64,7 @@ import * as market from '../api/market';
 jest.mock('./../api/market');
 
 import Trade from './../api/trade';
+import { sleep } from '../utility/helper';
 
 describe('Trade', () => {
 	const card_details_string = fs.readFileSync('./data/cardsDetails.json', { encoding: 'utf8' });
@@ -300,7 +301,10 @@ describe('Trade', () => {
 			//aranged in before each
 
 			//Act
-			const res = await _trade.check_desired({ cards: [], currency: 'USD', price: 0.5, fee_pct: 500.0 }, '123456');
+			const res = await _trade.check_desired(
+				{ cards: [], currency: 'USD', price: 0.5, fee_pct: 500.0 },
+				'123456'
+			);
 
 			//Assert
 			expect(res).toStrictEqual({});
@@ -534,9 +538,9 @@ describe('Trade', () => {
 	describe('check_prices', () => {
 		const getPrices = market.getPrices as jest.Mock;
 		const getBids = market.getBids as jest.Mock;
-		
+
 		beforeEach(() => {
-			jest.clearAllMocks()
+			jest.clearAllMocks();
 			getPrices.mockImplementation(() => [
 				{
 					card_detail_id: 447,
@@ -571,7 +575,7 @@ describe('Trade', () => {
 					],
 				};
 			});
-		})
+		});
 
 		it('should generate prices based on provided bids', async () => {
 			//AAA arange act assert
@@ -598,7 +602,7 @@ describe('Trade', () => {
 
 			//Assert
 			// @ts-ignore Object is possibly 'undefined'
-			expect(local_settings.bids[0].prices[447].buy_price).toBe(2.4); // bid * 1.2
+			expect(local_settings.bids[0].prices[447].buy_price).toBe(2.2); // bid * 1.1
 			// @ts-ignore Object is possibly 'undefined'
 			expect(local_settings.bids[1].prices[447].buy_price).toBe(22.5); // low_price * 0.9
 		});
@@ -732,6 +736,10 @@ describe('Trade', () => {
 
 		it('should call buy_cards if everything passed', async () => {
 			//Arange
+			let getBlockNumSpy = jest.spyOn(hive, 'getBlockNum').mockImplementation(async () => {
+				await sleep(100);
+				return 1;
+			});
 			const cards_to_buy: CardToBuy[] = [
 				{
 					seller_tx_id: '123',
@@ -750,14 +758,11 @@ describe('Trade', () => {
 			];
 
 			//Act
-			await _trade.prepare_to_buy(
-				_trade.accounts[0],
-				cards_to_buy,
-				new Date(Date.now() - 14400000 - 7000).toLocaleString()
-			);
+			await _trade.prepare_to_buy(_trade.accounts[0], cards_to_buy, Date.now() - 9000, 1);
 
 			//Assert
 			expect(buy_cards_spy).toHaveBeenCalledTimes(5);
+			expect(getBlockNumSpy).toHaveBeenCalled();
 		});
 
 		it('should return undefined if cards_to_buy is empty array', async () => {
@@ -798,11 +803,7 @@ describe('Trade', () => {
 			];
 
 			//Act
-			await _trade.prepare_to_buy(
-				_trade.accounts[0],
-				cards_to_buy,
-				new Date(Date.now() - 14400000 - 7000).toLocaleString()
-			);
+			await _trade.prepare_to_buy(_trade.accounts[0], cards_to_buy, Date.now() - 10000, 1);
 
 			//Assert
 			expect(buy_cards_spy_local).toHaveBeenCalled();

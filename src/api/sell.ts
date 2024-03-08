@@ -60,7 +60,7 @@ const sell_cards = async (mongoClient: MongoClient) => {
 const calculate_profit = (trade: Partial<tradesRepo.Trade>, sellPrice: number) => {
 	if (!sellPrice || !trade.sell || !trade.buy) return;
 
-	trade.sell.usd = sellPrice;
+	trade.sell.usd = Number(sellPrice.toFixed(3));
 	trade.sell.break_even = trade.sell.break_even || calculate_break_even(trade.buy.usd);
 	let usdProfit = sellPrice * 0.94 - trade.buy.usd * 0.97;
 	trade.profit_usd = Number(usdProfit.toFixed(3));
@@ -68,7 +68,11 @@ const calculate_profit = (trade: Partial<tradesRepo.Trade>, sellPrice: number) =
 };
 
 const calculate_sellPrice = (marketPrice: number, buyPrice: number, sell_for_pct_more: number = 10) => {
-	let price = Math.max(marketPrice * 0.98, Number((marketPrice - 0.001).toFixed(3)), buyPrice * (1 + sell_for_pct_more / 100));
+	let price = Math.max(
+		marketPrice * 0.98,
+		Number((marketPrice - 0.001).toFixed(3)),
+		buyPrice * (1 + sell_for_pct_more / 100)
+	);
 	return Number(price.toFixed(3));
 };
 

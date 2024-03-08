@@ -1,10 +1,9 @@
 import { MongoClient } from 'mongodb';
 import { MarketPrice } from '../types/trade';
 import * as repo from './repo';
-import type { WithId, Document, ObjectId } from 'mongodb';
+import type { WithId, Document } from 'mongodb';
 
 export interface Trade extends WithId<Document> {
-	_id: ObjectId;
 	account: string;
 	uid: string;
 	card_id: number;
@@ -73,7 +72,7 @@ const findActiveTrades = async (client: MongoClient) => {
 
 const findTotalProfit = async (client: MongoClient): Promise<TotalProfit> => {
 	let profit = await repo.find(client, 'Trades', { _id: 'TOTAL' });
-	return profit[0] as TotalProfit || { _id: 'TOTAL', profit_usd: 0, sold_cards: 0 };
+	return (profit[0] as TotalProfit) || { _id: 'TOTAL', profit_usd: 0, sold_cards: 0 };
 };
 
 const updateTotals = async (client: MongoClient, profit: number) => {

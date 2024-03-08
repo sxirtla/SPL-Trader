@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 import chalk from 'chalk';
 
-import { GlobalParams } from '../types/trade';
+import { type BuyTxResult, type Bid, type BuyTxInfo, type CardToBuy, type GlobalParams } from '../types/trade';
 import * as tradesRepo from '../dal/tradesRepo';
 import { add_CARDS, calculate_profit, calculate_sellPrice, calculate_break_even } from './sell';
 import * as cardsApi from './cards';
@@ -49,28 +49,66 @@ export default class ActiveTrades {
 		await this.Check(marketData, ++page);
 	}
 
-	private pushLogToTable(trade: tradesRepo.Trade, card_info: cardsApi.CardInfo) {
-		const onMarket = !!(card_info.market_id && card_info.market_listing_type === 'SELL');
+	public CreateTrade(acc: string, buying_data: CardToBuy, tx: BuyTxInfo, bid: Bid, tx_result: BuyTxResult) {
+		let marketPrice = buying_data.bcx > 1 ? buying_data.buy_price.low_price_bcx : buying_data.buy_price.low_price;
+		const sellPrice = calculate_sellPrice(marketPrice as number, buying_data.price, bid.sell_for_pct_more);
+
+		const trade = {
+			account: acc,
+			uid: buying_data.card_id,
+			card_id: buying_data.card_detail_id,
+			card_name: buying_data.card_name,
+			create_date: tx.created_date,
+			bcx: buying_data.bcx,
+			status_id: 0,
+			status: 'Active',
+			profit_usd: 0,
+			profit_margin: 0,
+			bid_idx: buying_data.bid_idx,
+			bid_desc: bid.comment,
+			buy: {
+				tx_id: tx.id,
+				dec: tx_result.total_dec / tx_result.by_seller[0].items.length,
+				usd: buying_data.price,
+				market_price: buying_data.buy_price,
+			},
+			sell: {
+				usd: sellPrice,
+				tx_count: 0,
+				break_even: 0,
+			},
+		} as tradesRepo.Trade;
+
+		calculate_profit(trade, sellPrice);
+
+		tradesRepo.insertTrade(this.mongoClient, trade).catch((e) => console.log('Trade insert failed:', e));
+
+		return trade;
+	}
+
+	private pushLogToTable(trade: tradesRepo.Trade, cardInfo: cardsApi.CardInfo) {
+		const onMarket = !!(cardInfo.market_id && cardInfo.market_listing_type === 'SELL');
+		if (onMarket) calculate_profit(trade, Number(cardInfo.buy_price));
 		this.tableLogs.push({
 			account: trade.account,
 			uid: trade.uid,
-			name: card_info.details.name,
+			name: cardInfo.details.name,
 			buy: trade.buy.usd,
-			sell: onMarket ? Number(trade.sell?.usd.toFixed(3)) || 0 : 0,
-			profit: onMarket ? Number(trade.profit_usd.toFixed(3)) : 0,
+			sell: onMarket ? trade.sell!.usd || 0 : 0,
+			profit: onMarket ? trade.profit_usd : 0,
 		});
 	}
 
-	private async checkTrade(trade: tradesRepo.Trade, card_info: cardsApi.CardInfo, marketData: MarketData[]) {
-		await this.checkXp(trade, card_info);
+	private async checkTrade(trade: tradesRepo.Trade, cardInfo: cardsApi.CardInfo, marketData: MarketData[]) {
+		await this.checkXp(trade, cardInfo);
 
-		if (card_info.player !== trade.account) {
+		if (cardInfo.player !== trade.account) {
 			//card was sold
 			await this.finish(trade, this.params);
 			return;
 		}
 
-		if (card_info.combined_card_id || card_info.xp !== trade.xp) {
+		if (cardInfo.combined_card_id || cardInfo.xp !== trade.xp) {
 			// card was combined or burned
 			await tradesRepo.closeTrade(this.mongoClient, trade);
 			return;
@@ -78,8 +116,8 @@ export default class ActiveTrades {
 
 		if (trade.is_manual === true) return;
 
-		if (card_info.xp === 1 && card_info.market_id && card_info.market_listing_type === 'SELL') {
-			const updated = await this.updateCardPrice(card_info, trade, Object.keys(this.params.accounts));
+		if (cardInfo.xp === 1 && cardInfo.market_id && cardInfo.market_listing_type === 'SELL') {
+			const updated = await this.updateCardPrice(cardInfo, trade, Object.keys(this.params.accounts));
 			if (!updated) return;
 
 			calculate_profit(trade, updated.newPrice);
@@ -103,13 +141,13 @@ export default class ActiveTrades {
 		}
 
 		if (
-			!card_info.market_listing_type && //not rented or sold
-			!card_info.delegated_to && // not delegated
-			!card_info.lock_days && // not locked
-			(!card_info.stake_plot ||
-				(card_info.stake_end_date && Date.now() > new Date(card_info.stake_end_date).getTime())) // not staked to land and not in unstaking period
+			!cardInfo.market_listing_type && //not rented or sold
+			!cardInfo.delegated_to && // not delegated
+			!cardInfo.lock_days && // not locked
+			(!cardInfo.stake_plot ||
+				(cardInfo.stake_end_date && Date.now() > new Date(cardInfo.stake_end_date).getTime())) // not staked to land and not in unstaking period
 		) {
-			await this.sellOldTrade(marketData, trade, card_info.gold);
+			await this.sellOldTrade(marketData, trade, cardInfo.gold);
 		}
 	}
 

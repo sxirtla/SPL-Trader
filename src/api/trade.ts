@@ -119,55 +119,27 @@ https://hivehub.dev/tx/${tx.id}`
 			return;
 		}
 
-		let card_detail_id = buying_data.card_detail_id;
 		console.dir(buying_data.buy_price, { depth: null, maxArrayLength: null });
-		let marketPrice = buying_data.bcx > 1 ? buying_data.buy_price.low_price_bcx : buying_data.buy_price.low_price;
-		const sellPrice = sell.calculate_sellPrice(marketPrice as number, buying_data.price, bid.sell_for_pct_more);
+
+		const trade = this.activeTrades.CreateTrade(acc, buying_data, tx, bid, tx_result);
+		const sellPrice = trade.sell!.usd;
 
 		sell.add_CARDS(acc, [
 			{
 				cards: [buying_data.card_id],
 				currency: 'USD',
-				price: Number(sellPrice.toFixed(4)),
+				price: sellPrice,
 				fee_pct: 600,
 				list_fee: 1,
 				list_fee_token: 'DEC',
 			},
 		]);
 
-		let trade: Partial<tradesRepo.Trade> = {
-			account: acc,
-			uid: buying_data.card_id,
-			card_id: card_detail_id,
-			card_name: buying_data.card_name,
-			create_date: tx.created_date,
-			bcx: buying_data.bcx,
-			status_id: 0,
-			status: 'Active',
-			profit_usd: 0,
-			profit_margin: 0,
-			bid_idx: buying_data.bid_idx,
-			bid_desc: bid.comment,
-			buy: {
-				tx_id: tx.id,
-				dec: tx_result.total_dec / tx_result.by_seller[0].items.length,
-				usd: buying_data.price,
-				market_price: buying_data.buy_price,
-			},
-			sell: {
-				usd: sellPrice,
-				tx_count: 0,
-				break_even: 0,
-			},
-		};
-
-		sell.calculate_profit(trade, sellPrice);
-
-		tradesRepo.insertTrade(this.mongoClient, trade).catch((e) => console.log('Trade insert failed:', e));
-
 		console.log('');
 		console.log(
-			chalk.bold.blue(`will be selling ${buying_data.card_id} for: $${sellPrice} (profit: $${trade.profit_usd})`)
+			chalk.bold.blue(
+				`${acc} will be selling ${buying_data.card_id} for: $${sellPrice} (profit: $${trade.profit_usd})`
+			)
 		);
 	}
 
@@ -230,20 +202,31 @@ https://hivehub.dev/tx/${tx.id}`
 		console.log(this.transaction_delay);
 	}
 
-	async create_buy_trx(acc: string, jsondata: unknown, timestamp: number) {
+	async create_buy_trx(acc: string, jsondata: unknown, timestamp: number, block: number) {
 		let tx_promises: Promise<any>[] = [];
-		for (let i = 0; i < 5; i++) {
-			let res = hive.buy_cards(acc, jsondata).catch((e) => {
-				console.log('ERROR in hive.buy_cards:', e);
-				return null;
-			});
-			tx_promises.push(res);
+		let txCountPerBlock = 1;
+		let currentBlock = 0;
 
+		while (true) {
+			if (txCountPerBlock < 5) {
+				let res = hive.buy_cards(acc, jsondata).catch((e) => {
+					console.log('ERROR in hive.buy_cards:', e);
+					return null;
+				});
+				tx_promises.push(res);
+			}
+
+			let cb = await hive.getBlockNum();
+			if (currentBlock === cb) txCountPerBlock++;
+			else {
+				currentBlock = cb;
+				txCountPerBlock = 1;
+			}
 			let passed = (Date.now() - timestamp) / 1000;
-			console.log(i, passed, acc);
-			if (passed > 10) break;
-			await sleep(this.transaction_delay);
+			console.log(txCountPerBlock, passed, block, currentBlock, acc);
+			if (passed > 10 || currentBlock >= block + 3) break;
 		}
+
 		return tx_promises;
 	}
 
@@ -261,18 +244,7 @@ https://hivehub.dev/tx/${tx.id}`
 			currency: this.settings.global_params.accounts[acc].currency,
 		};
 
-		let tx_promises = await this.create_buy_trx(acc, jsondata, timestamp);
-
-		let currentBlock = await hive.getBlockNum();
-		console.log(acc, 'blocks:', block, ' - ', currentBlock);
-		if (block + 2 >= currentBlock) {
-			while (block + 2 > currentBlock) {
-				await sleep(100);
-				currentBlock = await hive.getBlockNum();
-			}
-
-			tx_promises.push(...(await this.create_buy_trx(acc, jsondata, timestamp)));
-		}
+		let tx_promises = await this.create_buy_trx(acc, jsondata, timestamp, block);
 		await sleep(2000);
 
 		Promise.all(tx_promises).then((tx) => {
@@ -423,7 +395,6 @@ https://hivehub.dev/tx/${tx.id}`
 
 			for (let i = 0; i < this.accounts.length; i++) {
 				const acc = this.accounts[i];
-				console.log(`prepare_to_buy for ${acc}`, Date.now());
 				this.prepare_to_buy(
 					acc,
 					[...cards_to_buy],
