@@ -44,7 +44,11 @@ export default class ActiveTrades {
 			this.pushLogToTable(trade, cardInfo);
 		}
 
-		console.table(this.tableLogs);
+		const transformed = this.tableLogs.reduce((log, { uid, ...x }) => {
+			log[uid] = x;
+			return log;
+		}, {} as { [uid: string]: Omit<TradeLog, 'uid'> });
+		console.table(transformed);
 		this.tableLogs = [];
 		await this.Check(marketData, ++page);
 	}

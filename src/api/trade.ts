@@ -216,14 +216,14 @@ https://hivehub.dev/tx/${tx.id}`
 				tx_promises.push(res);
 			}
 
+			let passed = (Date.now() - timestamp) / 1000;
+			if (txCountPerBlock < 5) console.log(txCountPerBlock, passed, block, currentBlock, acc);
 			let cb = await hive.getBlockNum();
 			if (currentBlock === cb) txCountPerBlock++;
 			else {
 				currentBlock = cb;
 				txCountPerBlock = 1;
 			}
-			let passed = (Date.now() - timestamp) / 1000;
-			console.log(txCountPerBlock, passed, block, currentBlock, acc);
 			if (passed > 10 || currentBlock >= block + 3) break;
 		}
 
