@@ -736,9 +736,10 @@ describe('Trade', () => {
 
 		it('should call buy_cards if everything passed', async () => {
 			//Arange
+			let block = 1;
 			let getBlockNumSpy = jest.spyOn(hive, 'getBlockNum').mockImplementation(async () => {
-				await sleep(100);
-				return 1;
+				await sleep(10);
+				return ++block;
 			});
 			const cards_to_buy: CardToBuy[] = [
 				{
@@ -758,10 +759,10 @@ describe('Trade', () => {
 			];
 
 			//Act
-			await _trade.prepare_to_buy(_trade.accounts[0], cards_to_buy, Date.now() - 9000, 1);
+			await _trade.prepare_to_buy(_trade.accounts[0], cards_to_buy, Date.now() - 10000, 1);
 
 			//Assert
-			expect(buy_cards_spy).toHaveBeenCalledTimes(5);
+			expect(buy_cards_spy).toHaveBeenCalledTimes(3);
 			expect(getBlockNumSpy).toHaveBeenCalled();
 		});
 

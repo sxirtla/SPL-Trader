@@ -7,7 +7,6 @@ import { sleep } from '../utility/helper';
 import * as market from './market';
 import * as cardsApi from './cards';
 import { readSettings } from './settings';
-import * as tradesRepo from './../dal/tradesRepo';
 import { getUsableBalance } from './user';
 import { generateBidPrices, setupBids } from './bids';
 import { manage_rc } from './rc';
@@ -24,7 +23,7 @@ export default class Trade {
 	private minute_timer = 0;
 	private sl_api_calls_per_minute = 0;
 	private buying_account_number: { [x: string]: number } = {};
-	private transaction_delay = 200;
+	private transaction_delay = 100;
 	private activeTrades: ActiveTrades;
 
 	constructor(private settings: LocalSettings, private card_details: any, private mongoClient: MongoClient) {
@@ -206,25 +205,29 @@ https://hivehub.dev/tx/${tx.id}`
 		let tx_promises: Promise<any>[] = [];
 		let txCountPerBlock = 1;
 		let currentBlock = 0;
+		let passed = 0;
 
-		while (true) {
-			if (txCountPerBlock < 5) {
-				let res = hive.buy_cards(acc, jsondata).catch((e) => {
-					console.log('ERROR in hive.buy_cards:', e);
-					return null;
-				});
-				tx_promises.push(res);
-			}
+		while (passed < 10.5 && currentBlock < block + 3) {
+			let res = hive.buy_cards(acc, jsondata).catch((e) => {
+				console.log('ERROR in hive.buy_cards:', e);
+				return null;
+			});
+			tx_promises.push(res);
 
-			let passed = (Date.now() - timestamp) / 1000;
-			if (txCountPerBlock < 5) console.log(txCountPerBlock, passed, block, currentBlock, acc);
-			let cb = await hive.getBlockNum();
+			passed = (Date.now() - timestamp) / 1000;
+			console.log(txCountPerBlock, passed, block, currentBlock, acc);
+			const cb = await hive.getBlockNum();
 			if (currentBlock === cb) txCountPerBlock++;
 			else {
 				currentBlock = cb;
 				txCountPerBlock = 1;
 			}
-			if (passed > 10 || currentBlock >= block + 3) break;
+			if (currentBlock === block + 1) {
+				//await sleep(this.transaction_delay);
+				passed = (Date.now() - timestamp) / 1000;
+				if (passed < 8.5) await sleep((8.5 - passed + Math.random() / 10) * 1000);
+			}
+			if (currentBlock === block + 2 && txCountPerBlock > 3) break;
 		}
 
 		return tx_promises;
@@ -240,7 +243,7 @@ https://hivehub.dev/tx/${tx.id}`
 
 		let jsondata = {
 			items: cards_to_buy.map((r) => r.seller_tx_id),
-			price: totalPrice + 0.0011,
+			price: totalPrice,
 			currency: this.settings.global_params.accounts[acc].currency,
 		};
 
@@ -403,7 +406,7 @@ https://hivehub.dev/tx/${tx.id}`
 				).catch((e) => {
 					console.log('ERROR in prepare_to_buy:', e);
 				});
-				await sleep(50);
+				await sleep(100);
 			}
 		});
 	}

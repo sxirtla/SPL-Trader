@@ -68,7 +68,7 @@ const findTransaction = (txId: string) => client.transaction.findTransaction(txI
 
 const broadcast = (tx: HiveCustomJson): Promise<dhive.TransactionConfirmation | null> => {
 	let acc = tx.required_auths[0] || tx.required_posting_auths[0];
-	if(!ACCOUNTS[acc]) return Promise.reject(null);
+	if (!ACCOUNTS[acc]) return Promise.reject(null);
 	let currentKey = tx.required_auths.length > 0 ? ACCOUNTS[acc].active_key : ACCOUNTS[acc].key;
 	return client.broadcast.json(tx, currentKey).catch((e) => {
 		console.log('Broadcast error: ', e?.message);
@@ -79,6 +79,8 @@ const broadcast = (tx: HiveCustomJson): Promise<dhive.TransactionConfirmation | 
 const getStream = (): NodeJS.ReadableStream => client.blockchain.getOperationsStream(); //{ options: { mode: dhive.BlockchainMode.Latest } }
 
 const getBlockNum = () => client.blockchain.getCurrentBlockNum(); //dhive.BlockchainMode.Latest
+
+const getBlockNumbers = (to: undefined | number = undefined) => client.blockchain.getBlockNumbers({ to: to });
 
 const getRCMana = async (acc: string) => {
 	let rc = await client.rc.getRCMana(acc);
@@ -171,6 +173,7 @@ export {
 	findTransaction,
 	broadcast,
 	getBlockNum,
+	getBlockNumbers,
 	getStream,
 	getRCMana,
 	delegateRC,
