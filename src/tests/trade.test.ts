@@ -97,8 +97,8 @@ describe('Trade', () => {
 		};
 	});
 
-	describe('setup', () => {
-		it('should generate cards object after calling setup', () => {
+	describe('bid setup', () => {
+		it('should generate cards object after calling Trade constructor', () => {
 			//AAA arange act assert
 			local_settings.bids.push({
 				id: 10,
@@ -113,10 +113,9 @@ describe('Trade', () => {
 				auto_set_buy_price: true,
 				max_quantity: 5,
 			});
-			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
-			trade.setup();
+			new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Assert
 			expect(generateKeySpy).toHaveBeenCalled();
@@ -136,10 +135,9 @@ describe('Trade', () => {
 				comment: 'Grum Flameblade',
 				cards: { 447: { max_quantity: 1 } },
 			});
-			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
-			trade.setup();
+			new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Assert
 			expect(local_settings.bids.length).toBe(0);
@@ -152,10 +150,9 @@ describe('Trade', () => {
 				comment: 'Grum Flameblade',
 				cards: { 447: { max_bcx_price: 3 } },
 			});
-			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
-			trade.setup();
+			new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Assert
 			expect(local_settings.bids.length).toBe(0);
@@ -168,10 +165,9 @@ describe('Trade', () => {
 				comment: 'Grum Flameblade',
 				cards: { 447: { max_bcx_price: 3, max_bcx: 5, max_quantity: 3 } },
 			});
-			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
-			trade.setup();
+			new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Assert
 			// @ts-expect-error Object is possibly 'undefined'
@@ -196,10 +192,9 @@ describe('Trade', () => {
 				max_quantity: 5,
 				only_modern: true,
 			});
-			const trade = new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Act
-			trade.setup();
+			new Trade(local_settings, card_details, {} as MongoClient);
 
 			//Assert
 			// @ts-expect-error Object is possibly 'undefined'
@@ -235,8 +230,7 @@ describe('Trade', () => {
 				},
 			});
 			_trade = new Trade(local_settings, card_details, {} as MongoClient);
-			_trade.setup();
-			await _trade.get_current_balance(_trade.accounts[0]);
+			await _trade.get_current_balance(_trade._accounts[0]);
 		});
 
 		it('should succcessfully validate this listing', async () => {
@@ -719,7 +713,7 @@ describe('Trade', () => {
 				},
 			});
 			_trade = new Trade(local_settings, card_details, {} as MongoClient);
-			await _trade.get_current_balance(_trade.accounts[0]);
+			await _trade.get_current_balance(_trade._accounts[0]);
 		});
 
 		it('should return undefined if opration is not custom_json', async () => {
@@ -759,10 +753,10 @@ describe('Trade', () => {
 			];
 
 			//Act
-			await _trade.prepare_to_buy(_trade.accounts[0], cards_to_buy, Date.now() - 10000, 1);
+			await _trade.prepare_to_buy(_trade._accounts[0], cards_to_buy, Date.now() - 10000, 1);
 
 			//Assert
-			expect(buy_cards_spy).toHaveBeenCalledTimes(3);
+			expect(buy_cards_spy).toHaveBeenCalledTimes(2);
 			expect(getBlockNumSpy).toHaveBeenCalled();
 		});
 
@@ -772,7 +766,7 @@ describe('Trade', () => {
 
 			//Act
 			const res = await _trade.prepare_to_buy(
-				_trade.accounts[0],
+				_trade._accounts[0],
 				[null, null, undefined, ''],
 				new Date(Date.now() - 14400000 - 7000).toLocaleString()
 			);
@@ -804,7 +798,7 @@ describe('Trade', () => {
 			];
 
 			//Act
-			await _trade.prepare_to_buy(_trade.accounts[0], cards_to_buy, Date.now() - 10000, 1);
+			await _trade.prepare_to_buy(_trade._accounts[0], cards_to_buy, Date.now() - 10000, 1);
 
 			//Assert
 			expect(buy_cards_spy_local).toHaveBeenCalled();
@@ -815,7 +809,7 @@ describe('Trade', () => {
 			buy_cards_spy.mockClear();
 			const getUsableBalanceMock = user.getUsableBalance as jest.Mock;
 			getUsableBalanceMock.mockImplementation((username: string, options: any) => 400);
-			await _trade.get_current_balance(_trade.accounts[0]);
+			await _trade.get_current_balance(_trade._accounts[0]);
 
 			const cards_to_buy: CardToBuy[] = [
 				{
@@ -836,7 +830,7 @@ describe('Trade', () => {
 
 			//Act
 			await _trade.prepare_to_buy(
-				_trade.accounts[0],
+				_trade._accounts[0],
 				cards_to_buy,
 				new Date(Date.now() - 14400000 - 7000).toLocaleString()
 			);
@@ -878,10 +872,10 @@ describe('Trade', () => {
 					},
 				},
 			];
-			_trade.buying_account_number[cards_to_buy[0].card_id] = 1;
+			_trade._buyingAccountNumber[cards_to_buy[0].card_id] = 1;
 
 			//Act
-			await _trade.check_buying_result(_trade.accounts[0], { data: cards_to_buy, tx_ids: ['123456'] });
+			await _trade.check_buying_result(_trade._accounts[0], { data: cards_to_buy, tx_ids: ['123456'] });
 
 			//Assert
 			// @ts-ignore Object is possibly 'undefined'
@@ -899,35 +893,35 @@ describe('Trade', () => {
 			_trade = new Trade(local_settings, card_details, {} as MongoClient);
 		});
 
-		it('should reset sl_api_calls_per_minute if 1 minute has passed', async () => {
+		it('should reset _slApiCallsPerMinute if 1 minute has passed', async () => {
 			//Arrange
 			jest.spyOn(_trade, 'run_job');
 			jest.spyOn(_trade, 'process');
-			_trade.sl_api_calls_per_minute = 100;
-			_trade.minute_timer = Date.now() - 61 * 1000;
+			_trade._slApiCallsPerMinute = 100;
+			_trade._minuteTimer = Date.now() - 61 * 1000;
 
 			//Act
 			await _trade.start();
 
 			//Assert
-			expect(_trade.sl_api_calls_per_minute).toEqual(0);
-			expect(_trade.minute_timer).toBeGreaterThanOrEqual(Date.now() - 5 * 1000);
+			expect(_trade._slApiCallsPerMinute).toEqual(0);
+			expect(_trade._minuteTimer).toBeGreaterThanOrEqual(Date.now() - 5 * 1000);
 		});
 
-		it('should not reset sl_api_calls_per_minute if 1 minute has not passed', async () => {
+		it('should not reset _slApiCallsPerMinute if 1 minute has not passed', async () => {
 			//Arrange
 			jest.spyOn(_trade, 'run_job');
 			jest.spyOn(_trade, 'process');
-			_trade.sl_api_calls_per_minute = 100;
+			_trade._slApiCallsPerMinute = 100;
 			const time = Date.now() - 50 * 1000;
-			_trade.minute_timer = time;
+			_trade._minuteTimer = time;
 
 			//Act
 			await _trade.start();
 
 			//Assert
-			expect(_trade.sl_api_calls_per_minute).toEqual(100);
-			expect(_trade.minute_timer).toEqual(time);
+			expect(_trade._slApiCallsPerMinute).toEqual(100);
+			expect(_trade._minuteTimer).toEqual(time);
 		});
 	});
 });

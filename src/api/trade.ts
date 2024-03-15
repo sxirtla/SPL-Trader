@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import * as hive from './hive';
-import { GameSettings, LocalSettings, SellCards, CardToBuy, BuyTxInfo, BuyTxResult } from '../types/trade';
+import { GameSettings, LocalSettings, SellCards, CardToBuy, BuyTxInfo, BuyTxResult, Bid } from '../types/trade';
 import { MongoClient } from 'mongodb';
 
 import { sleep } from '../utility/helper';
@@ -14,34 +14,36 @@ import * as sell from './sell';
 import ActiveTrades from './activeTrades';
 
 export default class Trade {
-	private game_settings: GameSettings;
-	private looking_for_cards: string[] = [];
-	private accounts: string[] = [];
-	private usd_balances: { [x: string]: number } = {};
-	private bids = this.settings.bids;
-	private last_checked = 0;
-	private minute_timer = 0;
-	private sl_api_calls_per_minute = 0;
-	private buying_account_number: { [x: string]: number } = {};
-	private transaction_delay = 100;
-	private activeTrades: ActiveTrades;
+	private _gameSettings: GameSettings;
+	private readonly _lookingForCards: string[] = [];
+	private readonly _accounts: string[] = [];
+	private readonly _bids: Bid[] = [];
+	private readonly _activeTrades: ActiveTrades;
+	private _usdBalances: { [x: string]: number } = {};
+	private _lastChecked = 0;
+	private _minuteTimer = 0;
+	private _slApiCallsPerMinute = 0;
+	private _buyingAccountNumber: { [x: string]: number } = {};
+	private _transactionDelay = 100;
 
-	constructor(private settings: LocalSettings, private card_details: any, private mongoClient: MongoClient) {
-		this.game_settings = readSettings();
-		this.accounts = Object.keys(settings.global_params.accounts);
+	constructor(private settings: LocalSettings, private readonly _cardDetails: any, private mongoClient: MongoClient) {
+		this._gameSettings = readSettings();
+		this._accounts = Object.keys(settings.global_params.accounts);
 		hive.init(settings.global_params.preferred_hive_node);
 		hive.generateKey(settings.global_params);
-		this.activeTrades = new ActiveTrades(mongoClient, settings.global_params);
+		this._bids = this.settings.bids;
+		this._lookingForCards = [...new Set(setupBids(this._bids, this._cardDetails))];
+		this._activeTrades = new ActiveTrades(mongoClient, settings.global_params);
 	}
 
 	async get_current_balance(acc: string) {
-		this.game_settings = readSettings();
+		this._gameSettings = readSettings();
 
 		let balance = await getUsableBalance(acc, this.settings.global_params.accounts[acc]);
 
-		this.usd_balances[acc] =
+		this._usdBalances[acc] =
 			this.settings.global_params.accounts[acc].currency == 'DEC'
-				? Number((balance * this.game_settings.dec_price).toFixed(3))
+				? Number((balance * this._gameSettings.dec_price).toFixed(3))
 				: Number((balance / 1000).toFixed(3));
 
 		return;
@@ -54,7 +56,7 @@ export default class Trade {
 		if (prices.length === 0 || !pm_bids) {
 			return null;
 		}
-		for (const bid of this.bids) {
+		for (const bid of this._bids) {
 			if (!bid.prices) bid.prices = {};
 
 			generateBidPrices(bid, pm_bids, prices, this.settings.global_params);
@@ -65,46 +67,46 @@ export default class Trade {
 	}
 
 	async run_job(delay: number = 5) {
-		if (Date.now() - this.last_checked < delay * 60 * 1000) return;
+		if (Date.now() - this._lastChecked < delay * 60 * 1000) return;
 
-		this.last_checked = Date.now();
+		this._lastChecked = Date.now();
 
 		//await tradesRepo.reCalculateTotals(this.mongoClient);
 
-		for (let i = 0; i < this.accounts.length; i++) {
-			const acc = this.accounts[i];
+		for (let i = 0; i < this._accounts.length; i++) {
+			const acc = this._accounts[i];
 			await this.get_current_balance(acc);
 			await manage_rc(acc, this.settings.global_params);
 		}
 
 		console.log('');
-		console.log(this.usd_balances);
+		console.log(this._usdBalances);
 
 		let marketData = await this.get_marketData_and_update_bid_prices();
 
 		await sell.sell_cards(this.mongoClient).catch((e) => console.log('error in sell_cards:', e));
 
-		await this.activeTrades.Check(marketData);
+		await this._activeTrades.Check(marketData);
 	}
 
 	revert_balance_and_quantities(acc: string, buy: CardToBuy) {
-		this.usd_balances[acc] += buy.price;
+		this._usdBalances[acc] += buy.price;
 
-		this.buying_account_number[buy.card_id] -= 1;
-		if (this.buying_account_number[buy.card_id] === 0) {
-			let bid = this.bids[buy.bid_idx];
+		this._buyingAccountNumber[buy.card_id] -= 1;
+		if (this._buyingAccountNumber[buy.card_id] === 0) {
+			let bid = this._bids[buy.bid_idx];
 			if (!bid || !bid.cards) return;
 			bid.cards[buy.card_detail_id].quantity = (bid.cards[buy.card_detail_id].quantity || 0) + (buy.bcx || 1);
-			delete this.buying_account_number[buy.card_id];
+			delete this._buyingAccountNumber[buy.card_id];
 			console.log('quantity restored to:', bid.cards[buy.card_detail_id].quantity?.toString());
 		}
 	}
 
 	handle_success(acc: string, buying_data: CardToBuy, tx_result: BuyTxResult, tx: BuyTxInfo) {
-		let bid = this.bids[buying_data.bid_idx];
+		let bid = this._bids[buying_data.bid_idx];
 		if (!bid || !bid.cards) return;
 		let quantity_remaining = bid.cards[buying_data.card_detail_id].quantity;
-		delete this.buying_account_number[buying_data.card_id];
+		delete this._buyingAccountNumber[buying_data.card_id];
 		console.log(
 			chalk.bold.green(
 				`
@@ -120,7 +122,7 @@ https://hivehub.dev/tx/${tx.id}`
 
 		console.dir(buying_data.buy_price, { depth: null, maxArrayLength: null });
 
-		const trade = this.activeTrades.CreateTrade(acc, buying_data, tx, bid, tx_result);
+		const trade = this._activeTrades.CreateTrade(acc, buying_data, tx, bid, tx_result);
 		const sellPrice = trade.sell!.usd;
 
 		sell.add_CARDS(acc, [
@@ -195,51 +197,52 @@ https://hivehub.dev/tx/${tx.id}`
 			console.log(chalk.bold.red(`${tr.trx_info?.id} - ${tr.trx_info?.error}`), tr.trx_info?.block_num);
 		});
 
-		if (!isSuccess && threeBlockErrorCount === 5) this.transaction_delay += 10;
-		else if (!isSuccess && threeBlockErrorCount > 0 && threeBlockErrorCount < 4) this.transaction_delay -= 10;
+		if (!isSuccess && threeBlockErrorCount === 5) this._transactionDelay += 10;
+		else if (!isSuccess && threeBlockErrorCount > 0 && threeBlockErrorCount < 4) this._transactionDelay -= 10;
 
-		console.log(this.transaction_delay);
+		console.log(this._transactionDelay);
 	}
 
 	async create_buy_trx(acc: string, jsondata: unknown, timestamp: number, block: number) {
-		let tx_promises: Promise<any>[] = [];
-		let txCountPerBlock = 1;
+		let txPromises: Promise<any>[] = [];
+		let txCount = 1;
 		let currentBlock = 0;
 		let passed = 0;
 
-		while (passed < 10.5 && currentBlock < block + 3) {
+		while (passed < 10.5 && currentBlock < block + 2) {
 			let res = hive.buy_cards(acc, jsondata).catch((e) => {
 				console.log('ERROR in hive.buy_cards:', e);
 				return null;
 			});
-			tx_promises.push(res);
+			txPromises.push(res);
 
 			passed = (Date.now() - timestamp) / 1000;
-			console.log(txCountPerBlock, passed, block, currentBlock, acc);
-			const cb = await hive.getBlockNum();
-			if (currentBlock === cb) txCountPerBlock++;
-			else {
-				currentBlock = cb;
-				txCountPerBlock = 1;
-			}
-			if (currentBlock === block + 1) {
-				//await sleep(this.transaction_delay);
-				passed = (Date.now() - timestamp) / 1000;
-				if (passed < 8.5) await sleep((8.5 - passed + Math.random() / 10) * 1000);
-			}
-			if (currentBlock === block + 2 && txCountPerBlock > 3) break;
+			console.log(txCount, passed, block, currentBlock, acc);
+			currentBlock = await hive.getBlockNum();
+			txCount++;
+			// if (currentBlock === cb) txCountPerBlock++;
+			// else {
+			// 	currentBlock = cb;
+			// 	txCountPerBlock = 1;
+			// }
+			// if (currentBlock === block + 1) {
+			// 	//await sleep(this.transaction_delay);
+			// 	passed = (Date.now() - timestamp) / 1000;
+			// 	if (passed < 8.5) await sleep((8.5 - passed + Math.random() / 10) * 1000);
+			// }
+			//if (currentBlock === block + 2 && txCountPerBlock > 1) break;
 		}
 
-		return tx_promises;
+		return txPromises;
 	}
 
 	async prepare_to_buy(acc: string, cards_to_buy: CardToBuy[], timestamp: number, block: number): Promise<void> {
 		cards_to_buy = cards_to_buy
 			.filter(Boolean)
-			.filter((o) => Object.keys(o).length > 0 && o.price <= this.usd_balances[acc]);
+			.filter((o) => Object.keys(o).length > 0 && o.price <= this._usdBalances[acc]);
 		if (!cards_to_buy.length) return;
 		let totalPrice = cards_to_buy.reduce((sum, card) => sum + card.price, 0);
-		this.usd_balances[acc] -= totalPrice;
+		this._usdBalances[acc] -= totalPrice;
 
 		let jsondata = {
 			items: cards_to_buy.map((r) => r.seller_tx_id),
@@ -258,7 +261,7 @@ https://hivehub.dev/tx/${tx.id}`
 			});
 
 			cards_to_buy.forEach(
-				(c) => (this.buying_account_number[c.card_id] = (this.buying_account_number[c.card_id] || 0) + 1)
+				(c) => (this._buyingAccountNumber[c.card_id] = (this._buyingAccountNumber[c.card_id] || 0) + 1)
 			);
 
 			let buying = { data: cards_to_buy, tx_ids: tx_ids };
@@ -277,7 +280,7 @@ https://hivehub.dev/tx/${tx.id}`
 		let card_id = card_id_parts ? parseInt(card_id_parts[1]) : 0;
 		if (!card_id) return result;
 
-		if (!this.looking_for_cards.includes(card_id.toString())) return result;
+		if (!this._lookingForCards.includes(card_id.toString())) return result;
 
 		let card = {
 				card_detail_id: card_id,
@@ -289,8 +292,8 @@ https://hivehub.dev/tx/${tx.id}`
 			card_cp = 0;
 
 		try {
-			for (let indx = 0; indx < this.bids.length; indx++) {
-				const bid = this.bids[indx];
+			for (let indx = 0; indx < this._bids.length; indx++) {
+				const bid = this._bids[indx];
 				if (!bid.cards) return result;
 				let remaining = bid.cards[card_id],
 					bcx = 0;
@@ -305,13 +308,13 @@ https://hivehub.dev/tx/${tx.id}`
 					bcx = 1;
 
 					if (price > (bid.prices[card_id].low_price as number) * 1.5) {
-						if (this.sl_api_calls_per_minute > 50) continue;
-						this.sl_api_calls_per_minute++;
+						if (this._slApiCallsPerMinute > 50) continue;
+						this._slApiCallsPerMinute++;
 						process.stdout.write('|');
 						let card_full_info = card.edition ? card : (await cardsApi.findCardInfo([card.uid]))[0];
 						if (!card_full_info?.edition) continue;
 						card = card_full_info;
-						bcx = cardsApi.calc_bcx(card, this.card_details, this.game_settings);
+						bcx = cardsApi.calc_bcx(card, this._cardDetails, this._gameSettings);
 					}
 
 					if (price > (bid.prices[card_id].low_price || 0) * bcx) continue;
@@ -320,7 +323,7 @@ https://hivehub.dev/tx/${tx.id}`
 						bcx > Math.min(remaining.quantity as number, remaining.bcx as number)
 					)
 						continue;
-					card_cp = card_cp || cardsApi.calc_cp(card, bcx, this.card_details, this.game_settings);
+					card_cp = card_cp || cardsApi.calc_cp(card, bcx, this._cardDetails, this._gameSettings);
 					if ((bid.min_cp_per_usd || 0) > 0 && card_cp / price < (bid.min_cp_per_usd || 0)) continue;
 					let dec_price = Math.min(readSettings().dec_price, 0.001);
 					if (bid.bellow_burn_value && (!dec_price || price / dec_price > card_cp * 0.95)) continue;
@@ -339,7 +342,7 @@ https://hivehub.dev/tx/${tx.id}`
 					fee_pct: listing.fee_pct || 6,
 					card_id: listing.cards[0],
 					card_detail_id: card_id,
-					card_name: this.card_details.find((x: any) => x.id == card.card_detail_id).name,
+					card_name: this._cardDetails.find((x: any) => x.id == card.card_detail_id).name,
 					bcx: bcx,
 					card_cp: card_cp,
 					price: Number(price),
@@ -360,13 +363,13 @@ https://hivehub.dev/tx/${tx.id}`
 		//process.stdout.write('.');
 
 		let op = operation.op[1];
-		if (op.id != 'sm_sell_cards' || this.accounts.includes(op.required_auths[0])) return;
+		if (op.id != 'sm_sell_cards' || this._accounts.includes(op.required_auths[0])) return;
 
 		let parsedJson = JSON.parse(op.json);
 		let listings = [parsedJson];
 		if (Array.isArray(parsedJson)) listings = [...parsedJson];
 
-		const bidQuantities = this.bids.map((b) => b.max_quantity || 0);
+		const bidQuantities = this._bids.map((b) => b.max_quantity || 0);
 		const minMaxCards = Math.min(Math.max(...bidQuantities), 10);
 		if (listings.length > minMaxCards) {
 			let cardCounts = listings.reduce((prev, curr) => {
@@ -396,8 +399,8 @@ https://hivehub.dev/tx/${tx.id}`
 
 			console.log(cards_to_buy);
 
-			for (let i = 0; i < this.accounts.length; i++) {
-				const acc = this.accounts[i];
+			for (let i = 0; i < this._accounts.length; i++) {
+				const acc = this._accounts[i];
 				this.prepare_to_buy(
 					acc,
 					[...cards_to_buy],
@@ -414,24 +417,16 @@ https://hivehub.dev/tx/${tx.id}`
 	async start(operation: { op: any[]; trx_id: string; timestamp: string; block: number }) {
 		this.run_job(this.settings.global_params.fetch_market_price_delay).catch((e) => {
 			console.log('ERROR in run_job:', e);
-			this.last_checked = 0;
+			this._lastChecked = 0;
 		});
 
-		if (Date.now() - this.minute_timer > 1 * 60 * 1000) {
-			this.sl_api_calls_per_minute = 0;
-			this.minute_timer = Date.now();
+		if (Date.now() - this._minuteTimer > 1 * 60 * 1000) {
+			this._slApiCallsPerMinute = 0;
+			this._minuteTimer = Date.now();
 		}
 
 		this.process(operation).catch((e) => {
 			console.log('ERROR in process:', e);
 		});
-	}
-
-	setup() {
-		this.bids = this.settings.bids;
-		this.looking_for_cards = setupBids(this.bids, this.card_details);
-
-		this.looking_for_cards = [...new Set(this.looking_for_cards)];
-		// console.dir(this.bids, { depth: null, maxArrayLength: null });
 	}
 }

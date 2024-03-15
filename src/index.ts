@@ -15,7 +15,6 @@ import Trade from './api/trade';
 	const serverClient = await connectToMongo(config.global_params.mongo_url);
 	hive.init(config.global_params.preferred_hive_node);
 	const trader = new Trade(config, cardDetails, serverClient);
-	trader.setup();
 	await trader.run_job(config.global_params.fetch_market_price_delay);
 	const stream = hive.getStream();
 	stream
