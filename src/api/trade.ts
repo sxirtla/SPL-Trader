@@ -24,7 +24,6 @@ export default class Trade {
 	private _minuteTimer = 0;
 	private _slApiCallsPerMinute = 0;
 	private _buyingAccountNumber: { [x: string]: number } = {};
-	private _transactionDelay = 100;
 
 	constructor(private settings: LocalSettings, private readonly _cardDetails: any, private mongoClient: MongoClient) {
 		this._gameSettings = readSettings();
@@ -196,11 +195,6 @@ https://hivehub.dev/tx/${tx.id}`
 			if (tr.trx_info?.error.includes('3 blocks')) threeBlockErrorCount++;
 			console.log(chalk.bold.red(`${tr.trx_info?.id} - ${tr.trx_info?.error}`), tr.trx_info?.block_num);
 		});
-
-		if (!isSuccess && threeBlockErrorCount === 5) this._transactionDelay += 10;
-		else if (!isSuccess && threeBlockErrorCount > 0 && threeBlockErrorCount < 4) this._transactionDelay -= 10;
-
-		console.log(this._transactionDelay);
 	}
 
 	async create_buy_trx(acc: string, jsondata: unknown, timestamp: number, block: number) {
@@ -220,17 +214,7 @@ https://hivehub.dev/tx/${tx.id}`
 			console.log(txCount, passed, block, currentBlock, acc);
 			currentBlock = await hive.getBlockNum();
 			txCount++;
-			// if (currentBlock === cb) txCountPerBlock++;
-			// else {
-			// 	currentBlock = cb;
-			// 	txCountPerBlock = 1;
-			// }
-			// if (currentBlock === block + 1) {
-			// 	//await sleep(this.transaction_delay);
-			// 	passed = (Date.now() - timestamp) / 1000;
-			// 	if (passed < 8.5) await sleep((8.5 - passed + Math.random() / 10) * 1000);
-			// }
-			//if (currentBlock === block + 2 && txCountPerBlock > 1) break;
+			if (passed < 8) await sleep((8 - passed + Math.random() / 10) * 1000);
 		}
 
 		return txPromises;
