@@ -65,8 +65,8 @@ const updateTrade = async (client: MongoClient, data: Trade) => {
 	await repo.updateOne(client, 'Trades', { _id: data._id }, data);
 };
 
-const findActiveTrades = async (client: MongoClient) => {
-	let trades = await repo.find(client, 'Trades', { status_id: 0 }).catch((e) => null);
+const findActiveTrades = async (client: MongoClient, skip = 0, limit = 1000) => {
+	let trades = await repo.find(client, 'Trades', { status_id: 0 }, {}, skip, limit).catch((e) => null);
 	return trades as Trade[];
 };
 

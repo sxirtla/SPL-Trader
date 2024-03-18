@@ -21,6 +21,7 @@ type TradeLog = {
 export default class ActiveTrades {
 	private lastChecked = 0;
 	private tableLogs: TradeLog[] = [];
+	private removedTradeCount = 0;
 
 	constructor(private mongoClient: MongoClient, private params: GlobalParams) {}
 
@@ -30,8 +31,7 @@ export default class ActiveTrades {
 		if (page === 0 && Date.now() - this.lastChecked < 60 * 60 * 1000) return;
 		this.lastChecked = Date.now();
 
-		let activeTrades = await tradesRepo.findActiveTrades(this.mongoClient);
-		activeTrades = activeTrades.slice(10 * page, 10 * (page + 1));
+		let activeTrades = await tradesRepo.findActiveTrades(this.mongoClient, 10 * page - this.removedTradeCount, 10);
 		if (!activeTrades || activeTrades.length === 0) return;
 
 		const cardsInfo = await cardsApi.findCardInfo(activeTrades.map((t) => t.uid));
@@ -109,12 +109,14 @@ export default class ActiveTrades {
 		if (cardInfo.player !== trade.account) {
 			//card was sold
 			await this.finish(trade, this.params);
+			this.removedTradeCount--;
 			return;
 		}
 
 		if (cardInfo.combined_card_id || cardInfo.xp !== trade.xp) {
 			// card was combined or burned
 			await tradesRepo.closeTrade(this.mongoClient, trade);
+			this.removedTradeCount--;
 			return;
 		}
 

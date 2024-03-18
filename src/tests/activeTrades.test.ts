@@ -52,7 +52,7 @@ describe('ActiveTrades', () => {
 
 	it('should call findCardInfo on active trades', async () => {
 		//Arrange
-		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockImplementationOnce(() =>
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', xp: 1 },
 				{ uid: 'C7-321-dcba', xp: 1 },
@@ -75,7 +75,7 @@ describe('ActiveTrades', () => {
 
 	it('should update xp on active trades if it is not set', async () => {
 		//Arrange
-		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockImplementationOnce(() =>
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', account: defaultAccount },
 				{ uid: 'C7-321-dcba', account: defaultAccount },
@@ -117,7 +117,7 @@ describe('ActiveTrades', () => {
 
 	it('should call finishTrade based on sold card count', async () => {
 		//Arrange
-		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockImplementationOnce(() =>
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', xp: 1, buy: { usd: 9 }, sell: {} },
 				{ uid: 'C7-321-dcba', xp: 1, buy: { usd: 5 }, sell: {} },
@@ -158,7 +158,7 @@ describe('ActiveTrades', () => {
 
 	it('should call closeTrade if card was combined or burned', async () => {
 		//Arrange
-		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockImplementationOnce(() =>
 			Promise.resolve([
 				{ uid: 'C7-123-abcd', xp: 1, account: defaultAccount },
 				{ uid: 'C7-321-dcba', xp: 1, account: defaultAccount },
@@ -184,7 +184,7 @@ describe('ActiveTrades', () => {
 
 	it('should push object to selling_cards if card is not on the market', async () => {
 		//Arrange
-		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+		const findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockImplementationOnce(() =>
 			Promise.resolve([
 				{
 					uid: 'C7-123-abcd',
@@ -226,13 +226,12 @@ describe('ActiveTrades', () => {
 	});
 
 	describe('updateCardPrice', () => {
-
 		let findActiveTradesSpy: jest.SpyInstance<Promise<tradesRepo.Trade[]>>;
 		let findCardInfoSpy: jest.SpyInstance<Promise<cardsApi.CardInfo[]>>;
 		let updateCardPriceSpy: jest.SpyInstance<Promise<TransactionConfirmation | null>>;
 
 		beforeEach(() => {
-			findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockReturnValue(
+			findActiveTradesSpy = jest.spyOn(tradesRepo, 'findActiveTrades').mockImplementationOnce(() =>
 				Promise.resolve([
 					{
 						uid: 'C7-123-abcd',
@@ -263,7 +262,7 @@ describe('ActiveTrades', () => {
 			updateCardPriceSpy = jest
 				.spyOn(hive, 'update_card_price')
 				.mockReturnValue(Promise.resolve({ id: 'txid1', block_num: 0, expired: false, trx_num: 0 }));
-		})
+		});
 
 		it('should update card price if position is low', async () => {
 			//Arrange
@@ -369,7 +368,7 @@ describe('ActiveTrades', () => {
 					{ uid: 'C7-123-abcd', buy_price: 8, xp: 1, market_id: 'market4' },
 				] as any)
 			);
-			
+
 			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
@@ -422,7 +421,7 @@ describe('ActiveTrades', () => {
 					{ uid: 'C7-123-abcd', buy_price: 2, xp: 1, market_id: 'market4' },
 				] as any)
 			);
-			
+
 			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
@@ -470,7 +469,7 @@ describe('ActiveTrades', () => {
 					{ uid: 'C7-123-abcd', buy_price: 3, xp: 1, market_id: 'market5' },
 				] as any)
 			);
-			
+
 			const updateTradeSpy = jest.spyOn(tradesRepo, 'updateTrade');
 
 			//Act
