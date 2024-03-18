@@ -35,7 +35,7 @@ export default class Trade {
 		this._activeTrades = new ActiveTrades(mongoClient, settings.global_params);
 	}
 
-	async get_current_balance(acc: string) {
+	async getCurrentBalance(acc: string) {
 		this._gameSettings = readSettings();
 
 		let balance = await getUsableBalance(acc, this.settings.global_params.accounts[acc]);
@@ -74,7 +74,7 @@ export default class Trade {
 
 		for (let i = 0; i < this._accounts.length; i++) {
 			const acc = this._accounts[i];
-			await this.get_current_balance(acc);
+			await this.getCurrentBalance(acc);
 			await manage_rc(acc, this.settings.global_params);
 		}
 
@@ -179,7 +179,7 @@ https://hivehub.dev/tx/${tx.id}`
 				this.handle_success(acc, buying_data, tx_result, tx as BuyTxInfo);
 			});
 
-			this.get_current_balance(acc);
+			this.getCurrentBalance(acc);
 			isSuccess = true;
 		} else {
 			buying_cards.data.forEach((failed_buy) => {

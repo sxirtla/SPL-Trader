@@ -230,7 +230,7 @@ describe('Trade', () => {
 				},
 			});
 			_trade = new Trade(local_settings, card_details, {} as MongoClient);
-			await _trade.get_current_balance(_trade._accounts[0]);
+			await _trade.getCurrentBalance(_trade._accounts[0]);
 		});
 
 		it('should succcessfully validate this listing', async () => {
@@ -713,7 +713,7 @@ describe('Trade', () => {
 				},
 			});
 			_trade = new Trade(local_settings, card_details, {} as MongoClient);
-			await _trade.get_current_balance(_trade._accounts[0]);
+			await _trade.getCurrentBalance(_trade._accounts[0]);
 		});
 
 		it('should return undefined if opration is not custom_json', async () => {
@@ -809,7 +809,7 @@ describe('Trade', () => {
 			buy_cards_spy.mockClear();
 			const getUsableBalanceMock = user.getUsableBalance as jest.Mock;
 			getUsableBalanceMock.mockImplementation((username: string, options: any) => 400);
-			await _trade.get_current_balance(_trade._accounts[0]);
+			await _trade.getCurrentBalance(_trade._accounts[0]);
 
 			const cards_to_buy: CardToBuy[] = [
 				{

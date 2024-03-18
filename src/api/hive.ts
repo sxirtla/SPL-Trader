@@ -78,7 +78,7 @@ const broadcast = (tx: HiveCustomJson): Promise<dhive.TransactionConfirmation | 
 
 const getStream = (): NodeJS.ReadableStream => client.blockchain.getOperationsStream(); //{ options: { mode: dhive.BlockchainMode.Latest } }
 
-const getBlockNum = () => client.blockchain.getCurrentBlockNum(); //dhive.BlockchainMode.Latest
+const getBlockNum = () => client.blockchain.getCurrentBlockNum(dhive.BlockchainMode.Latest); //dhive.BlockchainMode.Latest
 
 const getBlockNumbers = (to: undefined | number = undefined) => client.blockchain.getBlockNumbers({ to: to });
 
