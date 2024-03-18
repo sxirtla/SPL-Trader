@@ -768,7 +768,7 @@ describe('Trade', () => {
 			const res = await _trade.prepare_to_buy(
 				_trade._accounts[0],
 				[null, null, undefined, ''],
-				new Date(Date.now() - 14400000 - 7000).toLocaleString()
+				new Date(Date.now() - 7000).toISOString()
 			);
 
 			//Assert
@@ -804,11 +804,28 @@ describe('Trade', () => {
 			expect(buy_cards_spy_local).toHaveBeenCalled();
 		});
 
+		it('should not call buy_cards if dec_price is low and currency is DEC', async () => {
+			//Arange
+			buy_cards_spy.mockClear();
+			await _trade.getCurrentBalance(_trade._accounts[1]);
+			_trade._gameSettings.dec_price = 0.00089;
+
+			//Act
+			const res = await _trade.prepare_to_buy(
+				_trade._accounts[1],
+				[],
+				new Date(Date.now() - 7000).toISOString(),
+				0
+			);
+
+			//Assert
+			expect(buy_cards_spy).not.toHaveBeenCalled();
+			expect(res).toBeUndefined();
+		});
+
 		it('should not call buy_cards if card price > user balance', async () => {
 			//aranged in before each
 			buy_cards_spy.mockClear();
-			const getUsableBalanceMock = user.getUsableBalance as jest.Mock;
-			getUsableBalanceMock.mockImplementation((username: string, options: any) => 400);
 			await _trade.getCurrentBalance(_trade._accounts[0]);
 
 			const cards_to_buy: CardToBuy[] = [
@@ -829,11 +846,7 @@ describe('Trade', () => {
 			];
 
 			//Act
-			await _trade.prepare_to_buy(
-				_trade._accounts[0],
-				cards_to_buy,
-				new Date(Date.now() - 14400000 - 7000).toLocaleString()
-			);
+			await _trade.prepare_to_buy(_trade._accounts[0], cards_to_buy, new Date(Date.now() - 7000).toISOString());
 
 			//Assert
 			expect(buy_cards_spy).not.toHaveBeenCalled();

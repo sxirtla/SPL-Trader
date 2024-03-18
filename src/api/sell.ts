@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb';
 import * as hive from './hive';
 import chalk from 'chalk';
 import * as tradesRepo from '../dal/tradesRepo';
+import './../utility/number';
 
 type SELLING_CARDS = {
 	[account: string]: SELLING_CARD[];
@@ -60,22 +61,22 @@ const sell_cards = async (mongoClient: MongoClient) => {
 const calculate_profit = (trade: Partial<tradesRepo.Trade>, sellPrice: number) => {
 	if (!sellPrice || !trade.sell || !trade.buy) return;
 
-	trade.sell.usd = Number(sellPrice.toFixed(3));
+	trade.sell.usd = sellPrice.toFixed3();
 	trade.sell.break_even = trade.sell.break_even || calculate_break_even(trade.buy.usd);
 	let usdProfit = sellPrice * 0.94 - trade.buy.usd * 0.97;
-	trade.profit_usd = Number(usdProfit.toFixed(3));
-	trade.profit_margin = Number(((usdProfit / sellPrice) * 100).toFixed(3));
+	trade.profit_usd = usdProfit.toFixed3();
+	trade.profit_margin = ((usdProfit / sellPrice) * 100).toFixed3();
 };
 
 const calculate_sellPrice = (marketPrice: number, buyPrice: number, sell_for_pct_more: number = 10) => {
 	let price = Math.max(
 		marketPrice * 0.98,
-		Number((marketPrice - 0.001).toFixed(3)),
+		(marketPrice - 0.001).toFixed3(),
 		buyPrice * (1 + sell_for_pct_more / 100)
 	);
-	return Number(price.toFixed(3));
+	return price.toFixed3();
 };
 
-const calculate_break_even = (buyPrice: number) => Number(((buyPrice * 97) / 94).toFixed(3));
+const calculate_break_even = (buyPrice: number) => ((buyPrice * 97) / 94).toFixed3();
 
 export { get_CARDS, add_CARDS, sell_cards, calculate_profit, calculate_sellPrice, calculate_break_even };

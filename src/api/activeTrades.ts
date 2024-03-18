@@ -7,6 +7,7 @@ import { add_CARDS, calculate_profit, calculate_sellPrice, calculate_break_even 
 import * as cardsApi from './cards';
 import * as hive from './hive';
 import * as user from './user';
+import './../utility/number';
 import { MarketData, getCardPrices } from './market';
 
 type TradeLog = {
@@ -228,7 +229,7 @@ export default class ActiveTrades {
 			break;
 		}
 
-		newPrice = Number(newPrice.toFixed(3));
+		newPrice = newPrice.toFixed3();
 
 		if (newPrice >= filteredPrices[posIndex].buy_price || newPrice <= be) return null;
 
@@ -263,7 +264,7 @@ export default class ActiveTrades {
 				{
 					cards: [trade.uid],
 					currency: 'USD',
-					price: Number(sellPrice.toFixed(3)),
+					price: sellPrice.toFixed3(),
 					fee_pct: 600,
 					list_fee: 1,
 					list_fee_token: 'DEC',
@@ -272,7 +273,7 @@ export default class ActiveTrades {
 
 			console.log(
 				chalk.bold.cyan([
-					`[${trade.uid}] ${trade.card_name || ''} will be put to market for ${Number(sellPrice.toFixed(3))}`,
+					`[${trade.uid}] ${trade.card_name || ''} will be put to market for ${sellPrice.toFixed3()}`,
 					` profit: $${trade.profit_usd} ${trade.profit_margin}%`,
 				])
 			);

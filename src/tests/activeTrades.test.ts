@@ -146,9 +146,9 @@ describe('ActiveTrades', () => {
 			{},
 			{
 				buy: { usd: 5 },
-				profit_margin: 45.5,
-				profit_usd: 4.55,
-				sell: { break_even: 5.16, usd: 10 },
+				profit_margin: 45.499,
+				profit_usd: 4.549,
+				sell: { break_even: 5.159, usd: 10 },
 				uid: 'C7-321-dcba',
 				xp: 1,
 			}
@@ -300,7 +300,7 @@ describe('ActiveTrades', () => {
 					profit_margin: 29.29,
 					profit_usd: 0.439,
 					sell: {
-						break_even: 1.032,
+						break_even: 1.031,
 						tx_count: 2,
 						tx_id: 'txid1',
 						usd: 1.499,
@@ -343,10 +343,10 @@ describe('ActiveTrades', () => {
 						usd: 1,
 					},
 					card_id: 123,
-					profit_margin: 5.738,
+					profit_margin: 5.737,
 					profit_usd: 0.063,
 					sell: {
-						break_even: 1.032,
+						break_even: 1.031,
 						tx_count: 2,
 						tx_id: 'txid1',
 						usd: 1.099,
@@ -393,7 +393,7 @@ describe('ActiveTrades', () => {
 					profit_margin: 74.596,
 					profit_usd: 3.729,
 					sell: {
-						break_even: 1.032,
+						break_even: 1.031,
 						tx_count: 2,
 						tx_id: 'txid1',
 						usd: 4.999,
@@ -446,7 +446,7 @@ describe('ActiveTrades', () => {
 					profit_margin: 29.29,
 					profit_usd: 0.439,
 					sell: {
-						break_even: 1.032,
+						break_even: 1.031,
 						tx_count: 2,
 						tx_id: 'txid1',
 						usd: 1.499,

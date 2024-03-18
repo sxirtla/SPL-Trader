@@ -12,6 +12,7 @@ import { generateBidPrices, setupBids } from './bids';
 import { manage_rc } from './rc';
 import * as sell from './sell';
 import ActiveTrades from './activeTrades';
+import './../utility/number';
 
 export default class Trade {
 	private _gameSettings: GameSettings;
@@ -24,6 +25,7 @@ export default class Trade {
 	private _minuteTimer = 0;
 	private _slApiCallsPerMinute = 0;
 	private _buyingAccountNumber: { [x: string]: number } = {};
+	private readonly CONSTS: { MIN_DEC_PRICE: number } = { MIN_DEC_PRICE: 0.0009 };
 
 	constructor(private settings: LocalSettings, private readonly _cardDetails: any, private mongoClient: MongoClient) {
 		this._gameSettings = readSettings();
@@ -42,8 +44,8 @@ export default class Trade {
 
 		this._usdBalances[acc] =
 			this.settings.global_params.accounts[acc].currency == 'DEC'
-				? Number((balance * this._gameSettings.dec_price).toFixed(3))
-				: Number((balance / 1000).toFixed(3));
+				? (balance * this._gameSettings.dec_price).toFixed3()
+				: (balance / 1000).toFixed3();
 
 		return;
 	}
@@ -221,10 +223,21 @@ https://hivehub.dev/tx/${tx.id}`
 	}
 
 	async prepare_to_buy(acc: string, cards_to_buy: CardToBuy[], timestamp: number, block: number): Promise<void> {
+		if (
+			this._gameSettings.dec_price < this.CONSTS.MIN_DEC_PRICE &&
+			this.settings.global_params.accounts[acc].currency === 'DEC'
+		) {
+			console.log(
+				chalk.bold.red(`${acc} will not buy because DEC price is too low (${this._gameSettings.dec_price})`)
+			);
+			return;
+		}
+
 		cards_to_buy = cards_to_buy
 			.filter(Boolean)
 			.filter((o) => Object.keys(o).length > 0 && o.price <= this._usdBalances[acc]);
 		if (!cards_to_buy.length) return;
+
 		let totalPrice = cards_to_buy.reduce((sum, card) => sum + card.price, 0);
 		this._usdBalances[acc] -= totalPrice;
 
