@@ -81,6 +81,7 @@ export default class Trade {
 		}
 
 		console.log('');
+		console.log('DEC price: ', this._gameSettings.dec_price * 1000);
 		console.log(this._usdBalances);
 
 		let marketData = await this.get_marketData_and_update_bid_prices();
