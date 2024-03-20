@@ -25,7 +25,7 @@ export default class Trade {
 	private _minuteTimer = 0;
 	private _slApiCallsPerMinute = 0;
 	private _buyingAccountNumber: { [x: string]: number } = {};
-	private readonly CONSTS: { MIN_DEC_PRICE: number } = { MIN_DEC_PRICE: 0.0009 };
+	private readonly CONSTS = { DEC_PEG_PRICE: 0.001 };
 
 	constructor(private settings: LocalSettings, private readonly _cardDetails: any, private mongoClient: MongoClient) {
 		this._gameSettings = readSettings();
@@ -122,7 +122,7 @@ https://hivehub.dev/tx/${tx.id}`
 			return;
 		}
 
-		console.dir(buying_data.buy_price, { depth: null, maxArrayLength: null });
+		console.dir(buying_data.marketPrices, { depth: null, maxArrayLength: null });
 
 		const trade = this._activeTrades.CreateTrade(acc, buying_data, tx, bid, tx_result);
 		const sellPrice = trade.sell!.usd;
@@ -223,27 +223,42 @@ https://hivehub.dev/tx/${tx.id}`
 		return txPromises;
 	}
 
-	async prepare_to_buy(acc: string, cards_to_buy: CardToBuy[], timestamp: number, block: number): Promise<void> {
+	filterBuyableCards(acc: string, cardsToBuy: CardToBuy[]): CardToBuy[] {
+		let buyableCards = cardsToBuy.filter(Boolean);
+		if (!buyableCards.length) return [];
+
 		if (
-			this._gameSettings.dec_price < this.CONSTS.MIN_DEC_PRICE &&
-			this.settings.global_params.accounts[acc].currency === 'DEC'
+			this.settings.global_params.accounts[acc].currency !== 'DEC' ||
+			this._gameSettings.dec_price >= this.CONSTS.DEC_PEG_PRICE * 0.98
+		) {
+			return buyableCards.filter((o) => o.price <= this._usdBalances[acc]);
+		}
+
+		if (
+			this.settings.global_params.min_dec_price &&
+			this._gameSettings.dec_price < this.settings.global_params.min_dec_price
 		) {
 			console.log(
 				chalk.bold.red(`${acc} will not buy because DEC price is too low (${this._gameSettings.dec_price})`)
 			);
-			return;
+			return [];
 		}
 
-		cards_to_buy = cards_to_buy
-			.filter(Boolean)
-			.filter((o) => Object.keys(o).length > 0 && o.price <= this._usdBalances[acc]);
-		if (!cards_to_buy.length) return;
+		const decOfPegPct = this._gameSettings.dec_price / this.CONSTS.DEC_PEG_PRICE;
+		return buyableCards.filter(
+			(o) => o.price <= o.marketPrices.buy_price * decOfPegPct && o.price <= this._usdBalances[acc]
+		);
+	}
 
-		let totalPrice = cards_to_buy.reduce((sum, card) => sum + card.price, 0);
+	async prepareToBuy(acc: string, cardsToBuy: CardToBuy[], timestamp: number, block: number): Promise<void> {
+		cardsToBuy = this.filterBuyableCards(acc, cardsToBuy);
+		if (!cardsToBuy.length) return;
+
+		let totalPrice = cardsToBuy.reduce((sum, card) => sum + card.price, 0);
 		this._usdBalances[acc] -= totalPrice;
 
 		let jsondata = {
-			items: cards_to_buy.map((r) => r.seller_tx_id),
+			items: cardsToBuy.map((r) => r.seller_tx_id),
 			price: totalPrice,
 			currency: this.settings.global_params.accounts[acc].currency,
 		};
@@ -258,11 +273,11 @@ https://hivehub.dev/tx/${tx.id}`
 				return t.id;
 			});
 
-			cards_to_buy.forEach(
+			cardsToBuy.forEach(
 				(c) => (this._buyingAccountNumber[c.card_id] = (this._buyingAccountNumber[c.card_id] || 0) + 1)
 			);
 
-			let buying = { data: cards_to_buy, tx_ids: tx_ids };
+			let buying = { data: cardsToBuy, tx_ids: tx_ids };
 			this.check_buying_result(acc, buying).catch((e) =>
 				console.log(chalk.bold.red('error occurred in check_buying_result: ' + e))
 			);
@@ -344,7 +359,7 @@ https://hivehub.dev/tx/${tx.id}`
 					bcx: bcx,
 					card_cp: card_cp,
 					price: Number(price),
-					buy_price: bid.prices[card_id],
+					marketPrices: bid.prices[card_id],
 				};
 				break;
 			}
@@ -399,7 +414,7 @@ https://hivehub.dev/tx/${tx.id}`
 
 			for (let i = 0; i < this._accounts.length; i++) {
 				const acc = this._accounts[i];
-				this.prepare_to_buy(
+				this.prepareToBuy(
 					acc,
 					[...cards_to_buy],
 					new Date(operation.timestamp + 'Z').getTime(),

@@ -75,6 +75,7 @@ export type GlobalParams = {
 	profit_fee_pct: number;
 	fetch_market_price_delay: number;
 	preferred_hive_node?: string;
+	min_dec_price?: number;
 };
 
 export type LocalSettings = {
@@ -94,7 +95,7 @@ export type CardToBuy = {
 	card_cp: number;
 	price: number;
 	fee_pct: number;
-	buy_price: {
+	marketPrices: {
 		low_price?: number;
 		low_price_bcx?: number;
 		pm_bid?: number;

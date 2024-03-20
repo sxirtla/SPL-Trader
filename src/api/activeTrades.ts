@@ -55,7 +55,8 @@ export default class ActiveTrades {
 	}
 
 	public CreateTrade(acc: string, buying_data: CardToBuy, tx: BuyTxInfo, bid: Bid, tx_result: BuyTxResult) {
-		let marketPrice = buying_data.bcx > 1 ? buying_data.buy_price.low_price_bcx : buying_data.buy_price.low_price;
+		let marketPrice =
+			buying_data.bcx > 1 ? buying_data.marketPrices.low_price_bcx : buying_data.marketPrices.low_price;
 		const sellPrice = calculate_sellPrice(marketPrice as number, buying_data.price, bid.sell_for_pct_more);
 
 		const trade = {
@@ -75,7 +76,7 @@ export default class ActiveTrades {
 				tx_id: tx.id,
 				dec: tx_result.total_dec / tx_result.by_seller[0].items.length,
 				usd: buying_data.price,
-				market_price: buying_data.buy_price,
+				market_price: buying_data.marketPrices,
 			},
 			sell: {
 				usd: sellPrice,

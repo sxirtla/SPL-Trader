@@ -660,7 +660,7 @@ describe('Trade', () => {
 		});
 	});
 
-	describe('process, prepare_to_buy', () => {
+	describe('process, prepareToBuy', () => {
 		let _trade: any;
 		const buy_cards_spy = jest.spyOn(hive, 'buy_cards').mockImplementation((acc: string, data: any) => {
 			return Promise.resolve({ id: data.items[0] + '_buy_cards' } as TransactionConfirmation);
@@ -746,14 +746,14 @@ describe('Trade', () => {
 					card_cp: 0,
 					price: 0.45,
 					fee_pct: 500,
-					buy_price: {
+					marketPrices: {
 						buy_price: 0.5,
 					},
 				},
 			];
 
 			//Act
-			await _trade.prepare_to_buy(_trade._accounts[0], cards_to_buy, Date.now() - 10000, 1);
+			await _trade.prepareToBuy(_trade._accounts[0], cards_to_buy, Date.now() - 10000, 1);
 
 			//Assert
 			expect(buy_cards_spy).toHaveBeenCalledTimes(2);
@@ -765,7 +765,7 @@ describe('Trade', () => {
 			buy_cards_spy.mockClear();
 
 			//Act
-			const res = await _trade.prepare_to_buy(
+			const res = await _trade.prepareToBuy(
 				_trade._accounts[0],
 				[null, null, undefined, ''],
 				new Date(Date.now() - 7000).toISOString()
@@ -791,27 +791,94 @@ describe('Trade', () => {
 					card_cp: 0,
 					price: 0.45,
 					fee_pct: 500,
-					buy_price: {
+					marketPrices: {
 						buy_price: 0.5,
 					},
 				},
 			];
 
 			//Act
-			await _trade.prepare_to_buy(_trade._accounts[0], cards_to_buy, Date.now() - 10000, 1);
+			await _trade.prepareToBuy(_trade._accounts[0], cards_to_buy, Date.now() - 10000, 1);
 
 			//Assert
 			expect(buy_cards_spy_local).toHaveBeenCalled();
 		});
 
-		it('should not call buy_cards if dec_price is low and currency is DEC', async () => {
+		it('should buy_cards if dec price is low and card price <= buy_price * decOfPegPct ', async () => {
 			//Arange
 			buy_cards_spy.mockClear();
+			await _trade.getCurrentBalance(_trade._accounts[1]);
+			_trade._gameSettings.dec_price = 0.0009;
+			const cards_to_buy: CardToBuy[] = [
+				{
+					seller_tx_id: '123',
+					bid_idx: 0,
+					card_id: 'C4-168-FA5C2EF9TC',
+					card_name: 'test',
+					card_detail_id: 168,
+					bcx: 0,
+					card_cp: 0,
+					price: 9,
+					fee_pct: 500,
+					marketPrices: {
+						buy_price: 10,
+					},
+				},
+			];
+			//if the dec price is 0.0009, buy price will be reduced by 10%
+
+			//Act
+			await _trade.prepareToBuy(_trade._accounts[1], cards_to_buy, new Date(Date.now() - 7000).toISOString(), 0);
+
+			//Assert
+			expect(buy_cards_spy).toHaveBeenCalledTimes(1);
+		});
+
+		it('should not buy_cards if dec price is low and card price > buy_price * decOfPegPct ', async () => {
+			//Arange
+			buy_cards_spy.mockClear();
+			await _trade.getCurrentBalance(_trade._accounts[1]);
+			_trade._gameSettings.dec_price = 0.0009;
+			const cards_to_buy: CardToBuy[] = [
+				{
+					seller_tx_id: '123',
+					bid_idx: 0,
+					card_id: 'C4-168-FA5C2EF9TC',
+					card_name: 'test',
+					card_detail_id: 168,
+					bcx: 0,
+					card_cp: 0,
+					price: 9.01,
+					fee_pct: 500,
+					marketPrices: {
+						buy_price: 10,
+					},
+				},
+			];
+			//if the dec price is 0.0009, buy price will be reduced by 10%
+
+			//Act
+			const res = await _trade.prepareToBuy(
+				_trade._accounts[1],
+				cards_to_buy,
+				new Date(Date.now() - 7000).toISOString(),
+				0
+			);
+
+			//Assert
+			expect(buy_cards_spy).not.toHaveBeenCalled();
+			expect(res).toBeUndefined();
+		});
+
+		it('should not call buy_cards if min_dec_price is set in config, dec_price is low and currency is DEC', async () => {
+			//Arange
+			buy_cards_spy.mockClear();
+			local_settings.global_params.min_dec_price = 0.0009;
 			await _trade.getCurrentBalance(_trade._accounts[1]);
 			_trade._gameSettings.dec_price = 0.00089;
 
 			//Act
-			const res = await _trade.prepare_to_buy(
+			const res = await _trade.prepareToBuy(
 				_trade._accounts[1],
 				[],
 				new Date(Date.now() - 7000).toISOString(),
@@ -839,14 +906,14 @@ describe('Trade', () => {
 					card_cp: 0,
 					price: 0.5,
 					fee_pct: 500,
-					buy_price: {
+					marketPrices: {
 						buy_price: 0.45,
 					},
 				},
 			];
 
 			//Act
-			await _trade.prepare_to_buy(_trade._accounts[0], cards_to_buy, new Date(Date.now() - 7000).toISOString());
+			await _trade.prepareToBuy(_trade._accounts[0], cards_to_buy, new Date(Date.now() - 7000).toISOString());
 
 			//Assert
 			expect(buy_cards_spy).not.toHaveBeenCalled();
@@ -880,7 +947,7 @@ describe('Trade', () => {
 					card_cp: 0,
 					price: 0.45,
 					fee_pct: 500,
-					buy_price: {
+					marketPrices: {
 						buy_price: 0.5,
 					},
 				},
