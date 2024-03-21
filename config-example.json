@@ -22,7 +22,9 @@
 		"fetch_market_price_delay": 5,
 		"fetch_market_price_delay_dedsciption": "[number] - delay in minutes between updating market prices",
 		"preferred_hive_node": "https://api.hive.blog",
-		"preferred_hive_node_description": "[string] - optional - fastest hive node for you, can be checked by https://peakd.com/me/benchmark"
+		"preferred_hive_node_description": "[string] - optional - fastest hive node for you, can be checked by https://peakd.com/me/benchmark",
+		"min_dec_price": 0.0009,
+		"min_dec_price_description": "[number] - optional - bot will not buy cards if dec is bellow provided price"
 	},
 	"bids": [
 		{

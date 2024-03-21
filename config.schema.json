@@ -49,6 +49,9 @@
 				},
 				"preferred_hive_node": {
 					"type": "string"
+				},
+				"min_dec_price": {
+					"type": "integer"
 				}
 			},
 			"required": ["mongo_url", "accounts"]
