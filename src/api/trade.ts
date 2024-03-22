@@ -77,7 +77,7 @@ export default class Trade {
 		for (let i = 0; i < this._accounts.length; i++) {
 			const acc = this._accounts[i];
 			await this.getCurrentBalance(acc);
-			await manage_rc(acc, this.settings.global_params);
+			manage_rc(acc, this.settings.global_params);
 		}
 
 		console.log('');
