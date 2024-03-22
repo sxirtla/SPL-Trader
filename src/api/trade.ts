@@ -227,26 +227,28 @@ https://hivehub.dev/tx/${tx.id}`
 		let buyableCards = cardsToBuy.filter(Boolean);
 		if (!buyableCards.length) return [];
 
-		if (
+		const isDecCloseToPeg =
 			this.settings.global_params.accounts[acc].currency !== 'DEC' ||
-			this._gameSettings.dec_price >= this.CONSTS.DEC_PEG_PRICE * 0.98
-		) {
-			return buyableCards.filter((o) => o.price <= this._usdBalances[acc]);
-		}
+			this._gameSettings.dec_price >= this.CONSTS.DEC_PEG_PRICE * 0.95;
+		if (isDecCloseToPeg) return buyableCards.filter((o) => o.price <= this._usdBalances[acc]);
 
-		if (
+		//maybe we shouldn't check the bellow for max_bcx_price bids?
+
+		const isDecLowerThanConfig =
 			this.settings.global_params.min_dec_price &&
-			this._gameSettings.dec_price < this.settings.global_params.min_dec_price
-		) {
+			this._gameSettings.dec_price < this.settings.global_params.min_dec_price;
+		if (isDecLowerThanConfig) {
 			console.log(
 				chalk.bold.red(`${acc} will not buy because DEC price is too low (${this._gameSettings.dec_price})`)
 			);
 			return [];
 		}
 
-		const decOfPegPct = this._gameSettings.dec_price / this.CONSTS.DEC_PEG_PRICE;
+		//if dec is 10% off peg (0.0009) we will buy cards 5% cheaper than defined in config
+		const decOfPeg = this._gameSettings.dec_price / this.CONSTS.DEC_PEG_PRICE; //0.0009 => 0.9
+		const halfDecOfPeg = decOfPeg + (1 - decOfPeg) / 2; // 0.9 => 0.95
 		return buyableCards.filter(
-			(o) => o.price <= o.marketPrices.buy_price * decOfPegPct && o.price <= this._usdBalances[acc]
+			(o) => o.price <= o.marketPrices.buy_price * halfDecOfPeg && o.price <= this._usdBalances[acc]
 		);
 	}
 

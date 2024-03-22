@@ -818,7 +818,7 @@ describe('Trade', () => {
 					card_detail_id: 168,
 					bcx: 0,
 					card_cp: 0,
-					price: 9,
+					price: 9.5,
 					fee_pct: 500,
 					marketPrices: {
 						buy_price: 10,
@@ -834,7 +834,7 @@ describe('Trade', () => {
 			expect(buy_cards_spy).toHaveBeenCalledTimes(1);
 		});
 
-		it('should not buy_cards if dec price is low and card price > buy_price * decOfPegPct ', async () => {
+		it('should not buy_cards if dec price is low and card price > buy_price * decOfPeg ', async () => {
 			//Arange
 			buy_cards_spy.mockClear();
 			await _trade.getCurrentBalance(_trade._accounts[1]);
@@ -848,7 +848,7 @@ describe('Trade', () => {
 					card_detail_id: 168,
 					bcx: 0,
 					card_cp: 0,
-					price: 9.01,
+					price: 9.51,
 					fee_pct: 500,
 					marketPrices: {
 						buy_price: 10,
